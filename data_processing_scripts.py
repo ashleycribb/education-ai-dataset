@@ -15,7 +15,7 @@ def load_simulated_raw_data() -> List[Dict[str, Any]]:
     ]
     return simulated_raw_data
 
-# --- Sample Passages for Reading Comprehension ---
+# --- Sample Passages ---
 DEFAULT_4TH_GRADE_PASSAGES = [
     {
         "id": "passage_kitten_001",
@@ -29,11 +29,32 @@ DEFAULT_4TH_GRADE_PASSAGES = [
     }
 ]
 
+DEFAULT_7TH_GRADE_SCIENCE_PASSAGES = [
+    {
+        "id": "eco_passage_foodweb_001",
+        "title": "Forest Food Web",
+        "text": "In a forest ecosystem, energy flows from one organism to another. It starts with the sun, which provides energy for oak trees (producers) to make their own food through photosynthesis. Caterpillars (primary consumers) eat the oak leaves. Then, a blue jay (secondary consumer) might eat the caterpillar. A hawk (tertiary consumer) could then hunt the blue jay. When these organisms die, decomposers like mushrooms break them down, returning nutrients to the soil, which helps the oak tree grow."
+    },
+    {
+        "id": "eco_passage_biotic_abiotic_001",
+        "title": "Pond Life",
+        "text": "A pond is teeming with life. Fish, frogs, and tiny water plants are all living things, or biotic factors, that interact with each other. The pond also has many non-living, or abiotic factors, such as the water itself, sunlight that warms the pond, rocks that provide shelter, and the oxygen dissolved in the water that fish breathe."
+    },
+    {
+        "id": "eco_passage_human_impact_001", # For the third LO
+        "title": "Protecting Our Rivers",
+        "text": "Rivers are important ecosystems that can be harmed by human activities like pollution from factories or trash. However, humans can also have a positive impact. Planting trees along riverbanks helps prevent soil erosion and keeps the water clean. Cleaning up litter and reducing chemical runoff also helps protect the animals and plants that live in the river."
+    }
+]
+
 # --- Learning Objective Definitions ---
 LO_TEXTS = {
     "MainIdea": "Identify the main idea of a short passage by recognizing key characters/events, the problem, and the resolution.",
     "Inference": "Make simple inferences about characters' feelings, motivations, or events based on textual clues and background knowledge.",
-    "Vocabulary": "Determine the meaning of an unknown word or phrase using context clues within the passage."
+    "Vocabulary": "Determine the meaning of an unknown word or phrase using context clues within the passage.",
+    "EcoFoodWeb": "Explain energy flow in a food web, identifying producers, consumers (primary, secondary, tertiary), and decomposers.",
+    "EcoBioticAbiotic": "Differentiate between biotic and abiotic factors in an ecosystem and provide examples for each from a given scenario.",
+    "EcoHumanImpact": "Describe one way humans can positively or negatively impact an ecosystem, providing an example."
 }
 
 # --- DialogueContext Helper Class ---
@@ -41,7 +62,6 @@ class DialogueContext:
     def __init__(self, dialogue_base_id: str, start_time_str: str = "2024-07-31T10:00:00Z"):
         self.dialogue_base_id = dialogue_base_id
         self.turn_counter = 0
-        # Ensure the input string is compatible with fromisoformat
         if start_time_str.endswith('Z'):
             start_time_str = start_time_str[:-1] + "+00:00"
         self.current_time = datetime.datetime.fromisoformat(start_time_str)
@@ -51,7 +71,7 @@ class DialogueContext:
         return f"{self.dialogue_base_id}_turn_{self.turn_counter}"
 
     def get_timestamp(self, increment_seconds: int = 5) -> str:
-        if self.turn_counter > 1 or increment_seconds > 0 : # Only increment if not the very first timestamp call
+        if self.turn_counter > 1 or increment_seconds > 0 :
              self.current_time += datetime.timedelta(seconds=increment_seconds)
         return self.current_time.isoformat() + "Z"
         
@@ -61,72 +81,75 @@ class DialogueContext:
         initial_time = datetime.datetime.fromisoformat(initial_timestamp_str)
         return int((self.current_time - initial_time).total_seconds())
 
-# --- Core Dialogue Generation Logic ---
-
+# --- Core Dialogue Generation Logic (Shared Base) ---
 def _create_base_aita_json(
     dialogue_ctx: DialogueContext,
     passage: Dict[str, str],
     aita_profile: Dict[str, Any],
-    lo_id_suffix: str,
+    lo_id_code: str, # e.g., "MainIdea", "EcoFoodWeb"
     lo_text: str,
     interaction_type: str,
     additional_tags: List[str],
     expected_student_thinking: str,
-    keywords: List[str]
+    keywords: List[str],
+    dataset_version_suffix: str = "Pilot" # e.g., "Pilot", "EcoPilot"
 ) -> Dict[str, Any]:
-    """Helper to create the base structure of an AITA JSON object."""
     initial_timestamp = dialogue_ctx.get_timestamp(0)
+    grade_level_tag = aita_profile.get("grade_level", "unknown_grade")
+    subject_tag = aita_profile.get("subject", "unknown_subject").lower().replace(" ", "_")
+
     return {
         "dialogue_id": dialogue_ctx.dialogue_base_id,
-        "version": "1.3_pilot_dataset",
+        "version": f"1.3_enhanced_gold_standard_{dataset_version_suffix.lower()}",
         "creation_timestamp_utc": initial_timestamp,
-        "last_updated_timestamp_utc": initial_timestamp, # Will be updated later
+        "last_updated_timestamp_utc": initial_timestamp, 
         "metadata": {
             "original_source_content_id": passage["id"],
-            "original_source_dataset": "DEFAULT_4TH_GRADE_PASSAGES_V2_Pilot",
-            "tags": ["reading comprehension", "4th grade", "gold_standard", "pilot_dataset"] + additional_tags,
-            "tool_source": "generate_4th_grade_rc_v3_pilot"
+            "original_source_dataset": f"DEFAULT_{grade_level_tag}TH_GRADE_{subject_tag.upper()}_PASSAGES",
+            "tags": [subject_tag, f"{grade_level_tag}th_grade", "gold_standard", dataset_version_suffix.lower()] + additional_tags,
+            "tool_source": f"generate_dialogues_v3_{dataset_version_suffix.lower()}"
         },
         "aita_profile": aita_profile,
         "pedagogical_intent": {
             "interaction_type": interaction_type,
-            "learning_objectives": [{"id": f"RC.4.LO.{lo_id_suffix}", "text": lo_text}],
+            "learning_objectives": [{"id": f"{subject_tag.upper()}.{grade_level_tag}.LO.{lo_id_code}", "text": lo_text}],
             "expected_student_thinking_process": expected_student_thinking,
             "keywords": keywords,
-            "difficulty_level": "4th_grade_on_level"
+            "difficulty_level": f"{grade_level_tag}th_grade_on_level"
         },
         "context_provided_to_aita": {
-            "user_id": f"student_pilot_{dialogue_ctx.dialogue_base_id.split('_')[-1]}",
-            "session_id": f"session_pilot_{dialogue_ctx.dialogue_base_id.split('_')[-1]}",
+            "user_id": f"student_pilot_{dialogue_ctx.dialogue_base_id.split('_')[-2]}_{dialogue_ctx.dialogue_base_id.split('_')[-1]}", # e.g. student_pilot_eco_001
+            "session_id": f"session_pilot_{dialogue_ctx.dialogue_base_id.split('_')[-2]}_{dialogue_ctx.dialogue_base_id.split('_')[-1]}",
             "prior_knowledge_level": "unknown",
             "prior_performance_summary": "N/A for this pilot dataset.",
-            "learning_context_description": f"Student is working on a 4th-grade reading comprehension task focusing on {lo_id_suffix}.",
+            "learning_context_description": f"Student is working on a {grade_level_tag}th-grade {subject_tag} task focusing on {lo_id_code}.",
             "content_item_id": passage["id"],
             "content_item_title": passage["title"],
             "content_item_text": passage["text"],
-            "potential_grade_level_of_content": "4"
+            "potential_grade_level_of_content": str(grade_level_tag)
         },
-        "dialogue_turns": [], # To be populated by specific LO functions
+        "dialogue_turns": [],
         "final_assessment_of_student_understanding": {
             "summary_of_understanding": "Placeholder: Assessment to be filled based on interaction.",
-            "mastery_level_per_lo": [{"lo_id": f"RC.4.LO.{lo_id_suffix}", "level": "not_assessed"}],
+            "mastery_level_per_lo": [{"lo_id": f"{subject_tag.upper()}.{grade_level_tag}.LO.{lo_id_code}", "level": "not_assessed"}],
             "next_steps_recommendation": "Placeholder: Suggest next steps."
         },
         "session_metadata_for_teacher_oversight": {
-            "session_duration_seconds": 0, # Will be updated
-            "engagement_metrics": {"total_turns": 0, "student_turns": 0, "aita_turns": 0}, # Will be updated
-            "flags_for_teacher_review": [],
-            "session_summary_notes": "Pilot dataset gold standard example."
+            "session_duration_seconds": 0, "engagement_metrics": {"total_turns": 0, "student_turns": 0, "aita_turns": 0},
+            "flags_for_teacher_review": [], "session_summary_notes": f"Pilot dataset gold standard example for {subject_tag}."
         }
     }
 
-def _create_main_idea_dialogue(passage: Dict[str, str], aita_profile: Dict[str, Any], dialogue_ctx: DialogueContext) -> Dict[str, Any]:
+# --- 4th Grade Reading Comprehension Dialogue Generation ---
+def _create_main_idea_dialogue_4th(passage: Dict[str, str], aita_profile: Dict[str, Any], dialogue_ctx: DialogueContext) -> Dict[str, Any]:
+    # (Implementation from previous step, slightly adapted to use new _create_base_aita_json structure)
     dialogue_json = _create_base_aita_json(
         dialogue_ctx, passage, aita_profile, "MainIdea", LO_TEXTS["MainIdea"],
         f"guided_discovery_main_idea_{passage['id'].split('_')[-1]}",
         ["main_idea", passage['id'].split('_')[-1]],
         "Student should identify key elements (character, problem, resolution for narratives; key topic/details for informational) and synthesize them into a central theme.",
-        ["main idea", "summary", "central theme", "story elements", "passage topic"] + passage.get("title", "").lower().split()
+        ["main idea", "summary", "central theme", "story elements", "passage topic"] + passage.get("title", "").lower().split(),
+        dataset_version_suffix="ReadingComprePilot"
     )
     dialogue_json["dialogue_turns"] = [
         {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", 
@@ -148,7 +171,7 @@ def _create_main_idea_dialogue(passage: Dict[str, str], aita_profile: Dict[str, 
     ]
     return dialogue_json
 
-def _create_inference_dialogue(passage: Dict[str, str], aita_profile: Dict[str, Any], dialogue_ctx: DialogueContext) -> Dict[str, Any]:
+def _create_inference_dialogue_4th(passage: Dict[str, str], aita_profile: Dict[str, Any], dialogue_ctx: DialogueContext) -> Dict[str, Any]:
     is_kitten_passage = passage['id'] == "passage_kitten_001"
     inference_focus = "character_feelings" if is_kitten_passage else "causal_reasoning"
     utterance1_aita = f"Let's think about what the story *doesn't* say directly. In the story '{passage['title']}', it says Lily felt scared when the sun began to set. Why do you think she felt scared *then*?" if is_kitten_passage \
@@ -160,7 +183,8 @@ def _create_inference_dialogue(passage: Dict[str, str], aita_profile: Dict[str, 
         f"guided_discovery_inference_{inference_focus}_{passage['id'].split('_')[-1]}",
         ["inference", inference_focus, passage['id'].split('_')[-1]],
         "Student should use textual clues and background knowledge to understand unstated information like emotions or causal relationships.",
-        ["inference", "textual clues", "reading between the lines", "emotions", "reasons"] + passage.get("title", "").lower().split()
+        ["inference", "textual clues", "reading between the lines", "emotions", "reasons"] + passage.get("title", "").lower().split(),
+        dataset_version_suffix="ReadingComprePilot"
     )
     dialogue_json["dialogue_turns"] = [
         {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", "utterance": utterance1_aita,
@@ -175,13 +199,14 @@ def _create_inference_dialogue(passage: Dict[str, str], aita_profile: Dict[str, 
     ]
     return dialogue_json
 
-def _create_vocab_dialogue(passage: Dict[str, str], aita_profile: Dict[str, Any], dialogue_ctx: DialogueContext, target_word: str, student_guess: str) -> Dict[str, Any]:
+def _create_vocab_dialogue_4th(passage: Dict[str, str], aita_profile: Dict[str, Any], dialogue_ctx: DialogueContext, target_word: str, student_guess: str) -> Dict[str, Any]:
     dialogue_json = _create_base_aita_json(
         dialogue_ctx, passage, aita_profile, "Vocabulary", LO_TEXTS["Vocabulary"],
         f"contextual_vocabulary_{target_word}_{passage['id'].split('_')[-1]}",
         ["vocabulary", "context clues", target_word, passage['id'].split('_')[-1]],
         "Student should use surrounding text (context clues) to infer the meaning of an unfamiliar word, then confirm understanding.",
-        ["vocabulary", "context clues", "word meaning", target_word] + passage.get("title", "").lower().split()
+        ["vocabulary", "context clues", "word meaning", target_word] + passage.get("title", "").lower().split(),
+        dataset_version_suffix="ReadingComprePilot"
     )
     dialogue_json["dialogue_turns"] = [
         {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", 
@@ -197,49 +222,167 @@ def _create_vocab_dialogue(passage: Dict[str, str], aita_profile: Dict[str, Any]
     ]
     return dialogue_json
 
-
 def generate_4th_grade_reading_comprehension_sample_dialogues(
-    aita_profile: Dict[str, Any],
-    passages: List[Dict[str, str]]
+    aita_profile: Dict[str, Any], passages: List[Dict[str, str]]
+) -> List[Dict[str, Any]]:
+    all_dialogues = []
+    start_time_base = datetime.datetime.now(datetime.timezone.utc)
+    for i, passage in enumerate(passages):
+        passage_start_time_str = (start_time_base + datetime.timedelta(minutes=i*30)).isoformat() + "Z"
+        for lo_key, lo_text_val in [("MainIdea",LO_TEXTS["MainIdea"]), ("Inference",LO_TEXTS["Inference"]), ("Vocabulary",LO_TEXTS["Vocabulary"])]:
+            dialogue_ctx = DialogueContext(f"gold_std_{passage['id']}_{lo_key.lower()}_001", passage_start_time_str)
+            if lo_key == "MainIdea":
+                dialogue = _create_main_idea_dialogue_4th(passage, aita_profile, dialogue_ctx)
+            elif lo_key == "Inference":
+                dialogue = _create_inference_dialogue_4th(passage, aita_profile, dialogue_ctx)
+            elif lo_key == "Vocabulary":
+                target_word = "cozy" if passage['id'] == "passage_kitten_001" else "pigment"
+                student_guess = "Like, safe and warm?" if target_word == "cozy" else "Is it like a color?"
+                dialogue = _create_vocab_dialogue_4th(passage, aita_profile, dialogue_ctx, target_word, student_guess)
+            else: continue
+            
+            dialogue["last_updated_timestamp_utc"] = dialogue_ctx.get_timestamp(0)
+            dialogue["session_metadata_for_teacher_oversight"]["session_duration_seconds"] = dialogue_ctx.get_total_duration(dialogue["creation_timestamp_utc"])
+            dialogue["session_metadata_for_teacher_oversight"]["engagement_metrics"] = {"total_turns": dialogue_ctx.turn_counter, "student_turns": dialogue_ctx.turn_counter // 2, "aita_turns": (dialogue_ctx.turn_counter + 1) // 2}
+            all_dialogues.append(dialogue)
+    return all_dialogues
+
+# --- 7th Grade Science (Ecology) Dialogue Generation ---
+def _create_eco_foodweb_dialogue(passage: Dict[str, str], aita_profile: Dict[str, Any], dialogue_ctx: DialogueContext) -> Dict[str, Any]:
+    dialogue_json = _create_base_aita_json(
+        dialogue_ctx, passage, aita_profile, "EcoFoodWeb", LO_TEXTS["EcoFoodWeb"],
+        f"guided_discovery_foodweb_{passage['id'].split('_')[-2]}", # e.g. foodweb_foodweb
+        ["ecology", "food web", "producer", "consumer", "decomposer", passage['id'].split('_')[-2]],
+        "Student should identify roles of organisms in the food web (producer, consumer types, decomposer) and trace energy flow.",
+        ["food web", "energy flow", "producer", "consumer", "decomposer", "ecosystem", "photosynthesis"],
+        dataset_version_suffix="EcoPilot"
+    )
+    dialogue_json["dialogue_turns"] = [
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", 
+         "utterance": f"Let's explore the '{passage['title']}' passage:\n\n\"{passage['text']}\"\n\nThe passage mentions the oak tree is a producer. What does a producer do in a food web?",
+         "confidence_score_aita": 0.98, "pedagogical_notes": "Present passage, then ask a targeted question about a key concept (producer) mentioned in the text.",
+         "safeguard_tags": ["safe", "on-topic"], "xapi_verb_id": "asked", "ontology_concept_tags": ["food_web_producer_definition"]},
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "student", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", "utterance": "It makes its own food using the sun.", 
+         "safeguard_tags": ["safe"], "xapi_verb_id": "responded", "ontology_concept_tags": ["student_defines_producer"]},
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", 
+         "utterance": "Exactly! And where does the oak tree get its energy from? The passage mentions it.",
+         "confidence_score_aita": 0.97, "pedagogical_notes": "Confirm understanding and ask for source of energy for producer, linking to text.",
+         "safeguard_tags": ["safe", "scaffolding"], "xapi_verb_id": "asked", "ontology_concept_tags": ["energy_source_producer"]},
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "student", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", "utterance": "From the sun!", 
+         "safeguard_tags": ["safe"], "xapi_verb_id": "responded", "ontology_concept_tags": ["student_identifies_sun"]},
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", 
+         "utterance": "Great! Now, what about the caterpillar? It's called a primary consumer. What does that mean based on what it eats?",
+         "confidence_score_aita": 0.98, "pedagogical_notes": "Introduce new term (primary consumer) and ask student to infer meaning from context.",
+         "safeguard_tags": ["safe"], "xapi_verb_id": "asked", "ontology_concept_tags": ["primary_consumer_definition_inference"]},
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "student", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", "utterance": "It eats the producer, the oak tree leaves.", 
+         "safeguard_tags": ["safe"], "xapi_verb_id": "responded", "ontology_concept_tags": ["student_defines_primary_consumer"]},
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", 
+         "utterance": "Perfect! So energy flows from the sun to the oak tree, then to the caterpillar. Can you trace the energy to the hawk based on the passage?",
+         "confidence_score_aita": 0.99, "pedagogical_notes": "Summarize energy flow so far and ask student to extend it based on the text.",
+         "safeguard_tags": ["safe", "positive_feedback"], "xapi_verb_id": "asked", "ontology_concept_tags": ["energy_flow_tracing", "food_web_path"]}
+    ]
+    return dialogue_json
+
+def _create_eco_biotic_abiotic_dialogue(passage: Dict[str, str], aita_profile: Dict[str, Any], dialogue_ctx: DialogueContext) -> Dict[str, Any]:
+    dialogue_json = _create_base_aita_json(
+        dialogue_ctx, passage, aita_profile, "EcoBioticAbiotic", LO_TEXTS["EcoBioticAbiotic"],
+        f"classification_biotic_abiotic_{passage['id'].split('_')[-2]}",
+        ["ecology", "biotic", "abiotic", "ecosystem factors", passage['id'].split('_')[-2]],
+        "Student should correctly classify examples from the passage as biotic or abiotic and explain the difference.",
+        ["biotic", "abiotic", "living", "non-living", "ecosystem components"],
+        dataset_version_suffix="EcoPilot"
+    )
+    dialogue_json["dialogue_turns"] = [
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", 
+         "utterance": f"Let's look at the '{passage['title']}' passage:\n\n\"{passage['text']}\"\n\nThe passage says fish and frogs are 'biotic factors'. What do you think 'biotic' means based on these examples?",
+         "confidence_score_aita": 0.98, "pedagogical_notes": "Present passage and ask for definition of 'biotic' based on examples.",
+         "safeguard_tags": ["safe"], "xapi_verb_id": "asked", "ontology_concept_tags": ["biotic_definition_from_examples"]},
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "student", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", "utterance": "Living things?", 
+         "safeguard_tags": ["safe"], "xapi_verb_id": "responded", "ontology_concept_tags": ["student_infers_biotic"]},
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", 
+         "utterance": "That's right! Biotic factors are all the living or once-living organisms in an ecosystem. Now, the passage mentions water and sunlight as 'abiotic factors'. What could 'abiotic' mean?",
+         "confidence_score_aita": 0.97, "pedagogical_notes": "Confirm biotic, then introduce abiotic with examples and ask for definition.",
+         "safeguard_tags": ["safe"], "xapi_verb_id": "asked", "ontology_concept_tags": ["abiotic_definition_from_examples", "contrastive_learning"]},
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "student", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", "utterance": "Non-living things?", 
+         "safeguard_tags": ["safe"], "xapi_verb_id": "responded", "ontology_concept_tags": ["student_infers_abiotic"]},
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", 
+         "utterance": "Exactly! So, can you name one more biotic factor and one more abiotic factor from the pond description in the passage?",
+         "confidence_score_aita": 0.98, "pedagogical_notes": "Confirm abiotic. Ask for additional examples from text to check understanding.",
+         "safeguard_tags": ["safe"], "xapi_verb_id": "asked", "ontology_concept_tags": ["example_identification_biotic_abiotic", "comprehension_check"]}
+    ]
+    return dialogue_json
+
+def _create_eco_human_impact_dialogue(passage: Dict[str, str], aita_profile: Dict[str, Any], dialogue_ctx: DialogueContext) -> Dict[str, Any]:
+    dialogue_json = _create_base_aita_json(
+        dialogue_ctx, passage, aita_profile, "EcoHumanImpact", LO_TEXTS["EcoHumanImpact"],
+        f"explanation_human_impact_{passage['id'].split('_')[-2]}",
+        ["ecology", "human impact", "ecosystems", "pollution", "conservation", passage['id'].split('_')[-2]],
+        "Student should describe a positive or negative human impact on an ecosystem using an example from the text.",
+        ["human impact", "pollution", "conservation", "positive impact", "negative impact", "ecosystem health"],
+        dataset_version_suffix="EcoPilot"
+    )
+    dialogue_json["dialogue_turns"] = [
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", 
+         "utterance": f"We've been reading about ecosystems. Let's look at the '{passage['title']}' passage:\n\n\"{passage['text']}\"\n\nThis passage talks about how humans can affect rivers. Can you tell me one *negative* way humans can impact a river, based on the text?",
+         "confidence_score_aita": 0.98, "pedagogical_notes": "Present passage. Ask for a negative human impact example from the text.",
+         "safeguard_tags": ["safe"], "xapi_verb_id": "asked", "ontology_concept_tags": ["human_impact_negative_example_elicitation"]},
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "student", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", "utterance": "Pollution from factories or trash.", 
+         "safeguard_tags": ["safe"], "xapi_verb_id": "responded", "ontology_concept_tags": ["student_identifies_negative_impact"]},
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", 
+         "utterance": "That's a key one. Now, can you find an example in the passage of a *positive* way humans can help rivers?",
+         "confidence_score_aita": 0.97, "pedagogical_notes": "Acknowledge correct answer. Ask for a positive human impact example from the text.",
+         "safeguard_tags": ["safe"], "xapi_verb_id": "asked", "ontology_concept_tags": ["human_impact_positive_example_elicitation"]},
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "student", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", "utterance": "Planting trees along riverbanks or cleaning up litter.", 
+         "safeguard_tags": ["safe"], "xapi_verb_id": "responded", "ontology_concept_tags": ["student_identifies_positive_impact"]},
+         {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", 
+         "utterance": "Excellent! So humans can both harm and help ecosystems. Understanding these impacts is important for protecting our environment.",
+         "confidence_score_aita": 0.98, "pedagogical_notes": "Summarize and state the importance of understanding human impact.",
+         "safeguard_tags": ["safe", "positive_feedback"], "xapi_verb_id": "provided_feedback", "ontology_concept_tags": ["summary_human_impact", "environmental_awareness"]}
+    ]
+    return dialogue_json
+
+
+def generate_7th_grade_science_eco_sample_dialogues(
+    aita_profile: Dict[str, Any], passages: List[Dict[str, str]]
 ) -> List[Dict[str, Any]]:
     """
-    Generates 6 "gold standard" AITA JSON dialogues for 4th-grade reading comprehension,
-    covering Main Idea, Inference, and Vocabulary for each of the two passages.
+    Generates 3-4 "gold standard" AITA JSON dialogues for 7th-grade science (ecology).
     """
     all_dialogues = []
     start_time_base = datetime.datetime.now(datetime.timezone.utc)
 
-    for i, passage in enumerate(passages):
-        # Ensure each dialogue starts at a slightly different time for realism if needed
-        passage_start_time_str = (start_time_base + datetime.timedelta(minutes=i*30)).isoformat() + "Z"
+    # Food Web dialogue for passage 1
+    passage_foodweb = next((p for p in passages if p["id"] == "eco_passage_foodweb_001"), None)
+    if passage_foodweb:
+        dialogue_ctx_fw = DialogueContext("gold_std_eco_foodweb_001", (start_time_base + datetime.timedelta(minutes=0)).isoformat() + "Z")
+        dialogue_fw = _create_eco_foodweb_dialogue(passage_foodweb, aita_profile, dialogue_ctx_fw)
+        dialogue_fw["last_updated_timestamp_utc"] = dialogue_ctx_fw.get_timestamp(0)
+        dialogue_fw["session_metadata_for_teacher_oversight"]["session_duration_seconds"] = dialogue_ctx_fw.get_total_duration(dialogue_fw["creation_timestamp_utc"])
+        dialogue_fw["session_metadata_for_teacher_oversight"]["engagement_metrics"] = {"total_turns": dialogue_ctx_fw.turn_counter, "student_turns": dialogue_ctx_fw.turn_counter // 2, "aita_turns": (dialogue_ctx_fw.turn_counter + 1) // 2}
+        all_dialogues.append(dialogue_fw)
 
-        # Main Idea
-        main_idea_ctx = DialogueContext(f"gold_std_{passage['id']}_main_idea_001", passage_start_time_str)
-        main_idea_dialogue = _create_main_idea_dialogue(passage, aita_profile, main_idea_ctx)
-        main_idea_dialogue["last_updated_timestamp_utc"] = main_idea_ctx.get_timestamp(0)
-        main_idea_dialogue["session_metadata_for_teacher_oversight"]["session_duration_seconds"] = main_idea_ctx.get_total_duration(main_idea_dialogue["creation_timestamp_utc"])
-        main_idea_dialogue["session_metadata_for_teacher_oversight"]["engagement_metrics"] = {"total_turns": main_idea_ctx.turn_counter, "student_turns": main_idea_ctx.turn_counter // 2, "aita_turns": (main_idea_ctx.turn_counter + 1) // 2}
-        all_dialogues.append(main_idea_dialogue)
-
-        # Inference
-        inference_ctx = DialogueContext(f"gold_std_{passage['id']}_inference_001", passage_start_time_str)
-        inference_dialogue = _create_inference_dialogue(passage, aita_profile, inference_ctx)
-        inference_dialogue["last_updated_timestamp_utc"] = inference_ctx.get_timestamp(0)
-        inference_dialogue["session_metadata_for_teacher_oversight"]["session_duration_seconds"] = inference_ctx.get_total_duration(inference_dialogue["creation_timestamp_utc"])
-        inference_dialogue["session_metadata_for_teacher_oversight"]["engagement_metrics"] = {"total_turns": inference_ctx.turn_counter, "student_turns": inference_ctx.turn_counter // 2, "aita_turns": (inference_ctx.turn_counter + 1) // 2}
-        all_dialogues.append(inference_dialogue)
+    # Biotic/Abiotic dialogue for passage 2
+    passage_biotic_abiotic = next((p for p in passages if p["id"] == "eco_passage_biotic_abiotic_001"), None)
+    if passage_biotic_abiotic:
+        dialogue_ctx_ba = DialogueContext("gold_std_eco_biotic_abiotic_001", (start_time_base + datetime.timedelta(minutes=10)).isoformat() + "Z")
+        dialogue_ba = _create_eco_biotic_abiotic_dialogue(passage_biotic_abiotic, aita_profile, dialogue_ctx_ba)
+        dialogue_ba["last_updated_timestamp_utc"] = dialogue_ctx_ba.get_timestamp(0)
+        dialogue_ba["session_metadata_for_teacher_oversight"]["session_duration_seconds"] = dialogue_ctx_ba.get_total_duration(dialogue_ba["creation_timestamp_utc"])
+        dialogue_ba["session_metadata_for_teacher_oversight"]["engagement_metrics"] = {"total_turns": dialogue_ctx_ba.turn_counter, "student_turns": dialogue_ctx_ba.turn_counter // 2, "aita_turns": (dialogue_ctx_ba.turn_counter + 1) // 2}
+        all_dialogues.append(dialogue_ba)
         
-        # Vocabulary
-        vocab_ctx = DialogueContext(f"gold_std_{passage['id']}_vocab_001", passage_start_time_str)
-        target_word = "cozy" if passage['id'] == "passage_kitten_001" else "pigment"
-        student_guess = "Like, safe and warm?" if target_word == "cozy" else "Is it like a color?"
-        vocab_dialogue = _create_vocab_dialogue(passage, aita_profile, vocab_ctx, target_word, student_guess)
-        vocab_dialogue["last_updated_timestamp_utc"] = vocab_ctx.get_timestamp(0)
-        vocab_dialogue["session_metadata_for_teacher_oversight"]["session_duration_seconds"] = vocab_ctx.get_total_duration(vocab_dialogue["creation_timestamp_utc"])
-        vocab_dialogue["session_metadata_for_teacher_oversight"]["engagement_metrics"] = {"total_turns": vocab_ctx.turn_counter, "student_turns": vocab_ctx.turn_counter // 2, "aita_turns": (vocab_ctx.turn_counter + 1) // 2}
-        all_dialogues.append(vocab_dialogue)
+    # Human Impact dialogue for passage 3
+    passage_human_impact = next((p for p in passages if p["id"] == "eco_passage_human_impact_001"), None)
+    if passage_human_impact:
+        dialogue_ctx_hi = DialogueContext("gold_std_eco_human_impact_001", (start_time_base + datetime.timedelta(minutes=20)).isoformat() + "Z")
+        dialogue_hi = _create_eco_human_impact_dialogue(passage_human_impact, aita_profile, dialogue_ctx_hi)
+        dialogue_hi["last_updated_timestamp_utc"] = dialogue_ctx_hi.get_timestamp(0)
+        dialogue_hi["session_metadata_for_teacher_oversight"]["session_duration_seconds"] = dialogue_ctx_hi.get_total_duration(dialogue_hi["creation_timestamp_utc"])
+        dialogue_hi["session_metadata_for_teacher_oversight"]["engagement_metrics"] = {"total_turns": dialogue_ctx_hi.turn_counter, "student_turns": dialogue_ctx_hi.turn_counter // 2, "aita_turns": (dialogue_ctx_hi.turn_counter + 1) // 2}
+        all_dialogues.append(dialogue_hi)
         
     return all_dialogues
+
 
 # --- LLM Augmentation Prompt Generation (Placeholder - Not primary focus of this refactor) ---
 def prepare_llm_augmentation_prompt(
@@ -248,11 +391,10 @@ def prepare_llm_augmentation_prompt(
     aita_profile: Optional[Dict[str, Any]] = None,
     example_aita_json_structure: Optional[Dict[str, Any]] = None
 ) -> str:
+    # (Implementation from previous step, kept for script integrity but not the focus here)
     prompt = f"Objective: Generate a pedagogically sound dialogue based on the following learning objective: \"{learning_objective_text}\".\n"
-    if passage_text:
-        prompt += f"Use the following passage as context: \"{passage_text}\"\n"
-    if aita_profile:
-        prompt += f"AITA Profile: {json.dumps(aita_profile)}\n"
+    if passage_text: prompt += f"Use the following passage as context: \"{passage_text}\"\n"
+    if aita_profile: prompt += f"AITA Profile: {json.dumps(aita_profile)}\n"
     prompt += "Format the output as a complete AITA JSON object. Here's a condensed example of the target structure (fill all fields thoughtfully):\n"
     if example_aita_json_structure:
         condensed_example = {
@@ -276,46 +418,47 @@ def save_structured_data(structured_data: List[Dict[str, Any]], filename: str) -
 
 # --- Main Execution Block (Updated for Pilot Dataset Generation) ---
 if __name__ == "__main__":
-    print("--- AITA Data Processing Script (Pilot Dataset Generation) ---")
+    print("--- AITA Data Processing Script ---")
 
+    # --- 4th Grade Reading Comprehension ---
     reading_aita_profile_pilot = {
-        "subject": "Reading Comprehension",
-        "grade_level": "4",
+        "subject": "Reading Comprehension", "grade_level": "4",
         "jurisdiction": "US Common Core ELA Alignment (Simulated)", 
         "persona_name": "ReaderAITA_Explorer_v1.3_Pilot",
         "target_audience_description": "4th-grade students (typically 9-10 years old) working on foundational reading skills."
     }
-    
     print("\n--- Generating Pilot Dataset for 4th Grade Reading Comprehension ---")
-    pilot_dialogues = generate_4th_grade_reading_comprehension_sample_dialogues(
-        aita_profile=reading_aita_profile_pilot, 
-        passages=DEFAULT_4TH_GRADE_PASSAGES
+    pilot_dialogues_reading = generate_4th_grade_reading_comprehension_sample_dialogues(
+        aita_profile=reading_aita_profile_pilot, passages=DEFAULT_4TH_GRADE_PASSAGES
     )
-    print(f"Generated {len(pilot_dialogues)} pilot dataset dialogues.")
-    
-    if pilot_dialogues:
-        print("\n--- Example Dialogues from Pilot Dataset ---")
-        
-        # Print one example for each LO type
-        example_main_idea = next((d for d in pilot_dialogues if "main_idea" in d["dialogue_id"]), None)
-        example_inference = next((d for d in pilot_dialogues if "inference" in d["dialogue_id"] and "leaves" in d["dialogue_id"]), None) # Inference from leaves
-        example_vocab = next((d for d in pilot_dialogues if "vocab" in d["dialogue_id"] and "kitten" in d["dialogue_id"]), None) # Vocab from kitten
+    print(f"Generated {len(pilot_dialogues_reading)} pilot reading comprehension dialogues.")
+    if pilot_dialogues_reading:
+        save_structured_data(pilot_dialogues_reading, "pilot_dataset_reading_compre_v1.json")
+    print("-" * 30)
 
-        if example_main_idea:
-            print("\nExample Main Idea Dialogue (Kitten):")
-            print(json.dumps(example_main_idea, indent=2))
-        if example_inference:
-            print("\nExample Inference Dialogue (Leaves):")
-            print(json.dumps(example_inference, indent=2))
-        if example_vocab:
-            print("\nExample Vocabulary Dialogue (Kitten - 'cozy'):")
-            print(json.dumps(example_vocab, indent=2))
-        
-        print("-" * 30)
-        print("\n--- Saving Pilot Reading Comprehension Dataset ---")
-        save_structured_data(pilot_dialogues, "pilot_dataset_reading_compre_v1.json")
-    else:
-        print("No pilot dialogues were generated.")
+    # --- 7th Grade Science (Ecology) ---
+    eco_aita_profile = {
+        "subject": "Science", "grade_level": "7",
+        "jurisdiction": "NGSS Alignment (Simulated)",
+        "persona_name": "EcoExplorerAITA_v1.0",
+        "target_audience_description": "7th-grade students (typically 12-13 years old) learning about ecology."
+    }
+    print("\n--- Generating Sample Dataset for 7th Grade Science (Ecology) ---")
+    eco_dialogues = generate_7th_grade_science_eco_sample_dialogues(
+        aita_profile=eco_aita_profile, passages=DEFAULT_7TH_GRADE_SCIENCE_PASSAGES
+    )
+    print(f"Generated {len(eco_dialogues)} sample ecology dialogues.")
+    if eco_dialogues:
+        print("\nExample Ecology Dialogue (Food Web):")
+        # Find a food web dialogue to print
+        foodweb_example = next((d for d in eco_dialogues if "foodweb" in d["dialogue_id"]), None)
+        if foodweb_example:
+            print(json.dumps(foodweb_example, indent=2))
+        else:
+            print(" (No food web example found to display, printing first eco dialogue if available)")
+            if eco_dialogues: print(json.dumps(eco_dialogues[0], indent=2))
+
+        save_structured_data(eco_dialogues, "eco_explorer_aita_sample_data.json")
     print("-" * 30)
     
     print("\nScript execution finished.")
