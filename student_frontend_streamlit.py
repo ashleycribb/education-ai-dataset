@@ -15,7 +15,7 @@ def get_mock_aita_response(user_message: str, aita_persona: str) -> str:
     Simulates an AITA's response based on user input and AITA persona.
     """
     user_message_lower = user_message.lower()
-    
+
     if "hello" in user_message_lower or "hi" in user_message_lower:
         return f"Hello there! I'm {aita_persona}. How can I help you with your reading today?"
     elif "main idea" in user_message_lower:
@@ -45,14 +45,14 @@ def run_student_frontend():
     if prompt := st.chat_input("What would you like to discuss or ask?"):
         # Add user's message to session state
         st.session_state.messages.append({"role": "user", "content": prompt})
-        
+
         # Display user's message (Streamlit will re-run and the loop above will display it)
         # No need for an explicit `st.markdown` here for the user message due to re-run.
 
         # Get and add AITA's response
         assistant_response = get_mock_aita_response(prompt, st.session_state.current_aita_persona)
         st.session_state.messages.append({"role": "assistant", "content": assistant_response})
-        
+
         # Force a re-run to display the new assistant message immediately.
         # st.chat_input causes a re-run automatically when input is submitted.
         # If we needed to force it for other reasons: st.experimental_rerun() or st.rerun() in newer versions

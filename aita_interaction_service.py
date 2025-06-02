@@ -20,7 +20,7 @@ class UserProfile(UserProfileCreate):
 class InteractionRequest(BaseModel):
     session_id: Optional[str] = None
     user_id: str # This should now ideally be a registered user_id
-    aita_persona_id: str = "default_phi3_base" 
+    aita_persona_id: str = "default_phi3_base"
     user_utterance: str
     conversation_history: List[Dict[str, str]] = []
 
@@ -55,15 +55,15 @@ async def load_model_resources():
 
         model = AutoModelForCausalLM.from_pretrained(
             MODEL_ID,
-            torch_dtype="auto", 
+            torch_dtype="auto",
             trust_remote_code=True
         )
         model.to(device)
-        model.eval() 
+        model.eval()
         print(f"INFO: Model '{MODEL_ID}' loaded successfully on {device}.")
     except Exception as e:
         print(f"ERROR: Failed to load model or tokenizer at startup: {e}")
-        model = None 
+        model = None
         tokenizer = None
 
 # --- 3. User Profile Endpoints ---
@@ -73,10 +73,10 @@ async def register_user(user_create: UserProfileCreate):
     for profile in USER_PROFILES_DB.values():
         if profile.username == user_create.username:
             raise HTTPException(status_code=400, detail=f"Username '{user_create.username}' already exists.")
-    
+
     user_id = uuid.uuid4().hex
     created_at = datetime.utcnow()
-    
+
     user_profile = UserProfile(
         user_id=user_id,
         username=user_create.username,
@@ -105,7 +105,7 @@ async def interact_with_aita(request: InteractionRequest):
         raise HTTPException(status_code=503, detail="Model resources are not available.")
 
     current_session_id = request.session_id if request.session_id else uuid.uuid4().hex
-    
+
     user_profile = USER_PROFILES_DB.get(request.user_id)
     effective_aita_persona_id = request.aita_persona_id
     system_prompt_addon = ""
@@ -114,7 +114,7 @@ async def interact_with_aita(request: InteractionRequest):
         print(f"INFO: Interaction for known user: {user_profile.username} (Grade: {user_profile.grade_level}, Preferred AITA: {user_profile.preferred_aita_persona_id})")
         # Conceptual: Use preferred_aita_persona_id to select model/adapter
         if user_profile.preferred_aita_persona_id:
-            effective_aita_persona_id = user_profile.preferred_aita_persona_id 
+            effective_aita_persona_id = user_profile.preferred_aita_persona_id
             print(f"INFO: Using user's preferred AITA persona: {effective_aita_persona_id}")
         if user_profile.grade_level:
             system_prompt_addon = f" The student is in grade {user_profile.grade_level}."
@@ -125,7 +125,7 @@ async def interact_with_aita(request: InteractionRequest):
 
     # TODO: Implement MCP client call for richer context.
     system_prompt = f"You are a helpful AI assistant ({effective_aita_persona_id}). Please respond clearly and concisely.{system_prompt_addon}"
-    
+
     messages = [{"role": "system", "content": system_prompt}]
     messages.extend(request.conversation_history)
     messages.append({"role": "user", "content": request.user_utterance})
@@ -142,7 +142,7 @@ async def interact_with_aita(request: InteractionRequest):
                 inputs.input_ids, max_new_tokens=300, eos_token_id=tokenizer.eos_token_id,
                 pad_token_id=tokenizer.pad_token_id, do_sample=True, temperature=0.7, top_p=0.9
             )
-        
+
         response_ids = generated_outputs[0][input_ids_length:]
         aita_raw_response = tokenizer.decode(response_ids, skip_special_tokens=True).strip()
         aita_final_response = aita_raw_response # Placeholder for moderation

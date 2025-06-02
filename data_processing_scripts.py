@@ -74,7 +74,7 @@ class DialogueContext:
         if self.turn_counter > 1 or increment_seconds > 0 :
              self.current_time += datetime.timedelta(seconds=increment_seconds)
         return self.current_time.isoformat() + "Z"
-        
+
     def get_total_duration(self, initial_timestamp_str: str) -> int:
         if initial_timestamp_str.endswith('Z'):
             initial_timestamp_str = initial_timestamp_str[:-1] + "+00:00"
@@ -102,7 +102,7 @@ def _create_base_aita_json(
         "dialogue_id": dialogue_ctx.dialogue_base_id,
         "version": f"1.3_enhanced_gold_standard_{dataset_version_suffix.lower()}",
         "creation_timestamp_utc": initial_timestamp,
-        "last_updated_timestamp_utc": initial_timestamp, 
+        "last_updated_timestamp_utc": initial_timestamp,
         "metadata": {
             "original_source_content_id": passage["id"],
             "original_source_dataset": f"DEFAULT_{grade_level_tag}TH_GRADE_{subject_tag.upper()}_PASSAGES",
@@ -152,19 +152,19 @@ def _create_main_idea_dialogue_4th(passage: Dict[str, str], aita_profile: Dict[s
         dataset_version_suffix="ReadingComprePilot"
     )
     dialogue_json["dialogue_turns"] = [
-        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", 
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text",
          "utterance": f"Hi! Let's read this passage titled '{passage['title']}'. Here it is:\n\n\"{passage['text']}\"\n\nWhat do you think this passage is mostly about?",
          "confidence_score_aita": 0.98, "pedagogical_notes": "Greet, present passage, ask open-ended question for main idea.",
          "safeguard_tags": ["safe", "on-topic"], "xapi_verb_id": "asked", "ontology_concept_tags": ["main_idea_elicitation"]},
-        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "student", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", "utterance": "It's about Lily the kitten getting lost.", 
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "student", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", "utterance": "It's about Lily the kitten getting lost.",
          "safeguard_tags": ["safe"], "xapi_verb_id": "responded", "ontology_concept_tags": ["partial_main_idea"]},
-        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", 
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text",
          "utterance": "That's a big part of it! What else happens after Lily gets lost? How does the story end for her?",
          "confidence_score_aita": 0.97, "pedagogical_notes": "Acknowledge and guide towards resolution for a complete main idea.",
          "safeguard_tags": ["safe", "scaffolding"], "xapi_verb_id": "asked", "ontology_concept_tags": ["scaffolding_question", "narrative_resolution"]},
-        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "student", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", "utterance": "She finds her cozy home and purrs because Tom is there.", 
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "student", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", "utterance": "She finds her cozy home and purrs because Tom is there.",
          "safeguard_tags": ["safe"], "xapi_verb_id": "responded", "ontology_concept_tags": ["identifies_resolution"]},
-        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", 
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text",
          "utterance": "Exactly! So, if we put it all together: Lily was lost, but she found her home and was happy. That's the main idea! Well done!",
          "confidence_score_aita": 0.99, "pedagogical_notes": "Synthesize and confirm the main idea, positive reinforcement.",
          "safeguard_tags": ["safe", "positive_feedback"], "xapi_verb_id": "provided_feedback", "ontology_concept_tags": ["main_idea_synthesis", "confirmation"]}
@@ -177,7 +177,7 @@ def _create_inference_dialogue_4th(passage: Dict[str, str], aita_profile: Dict[s
     utterance1_aita = f"Let's think about what the story *doesn't* say directly. In the story '{passage['title']}', it says Lily felt scared when the sun began to set. Why do you think she felt scared *then*?" if is_kitten_passage \
         else f"In the passage '{passage['title']}', it says the other colors were 'always there but hidden by the strong green.' Why do you think they were hidden before autumn?"
     utterance2_student = "Because it was getting dark and she was alone." if is_kitten_passage else "Because the green color from chlorophyll was so strong it covered them up."
-    
+
     dialogue_json = _create_base_aita_json(
         dialogue_ctx, passage, aita_profile, "Inference", LO_TEXTS["Inference"],
         f"guided_discovery_inference_{inference_focus}_{passage['id'].split('_')[-1]}",
@@ -190,9 +190,9 @@ def _create_inference_dialogue_4th(passage: Dict[str, str], aita_profile: Dict[s
         {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", "utterance": utterance1_aita,
          "confidence_score_aita": 0.98, "pedagogical_notes": "Prompt for inference based on textual detail.",
          "safeguard_tags": ["safe"], "xapi_verb_id": "asked", "ontology_concept_tags": ["inference_prompt", inference_focus]},
-        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "student", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", "utterance": utterance2_student, 
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "student", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", "utterance": utterance2_student,
          "safeguard_tags": ["safe"], "xapi_verb_id": "responded", "ontology_concept_tags": ["student_makes_inference"]},
-        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", 
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text",
          "utterance": "That's a very good thought! The story doesn't say that exactly, but you used clues from the story and what you know about the world to figure it out. That's called making an inference!",
          "confidence_score_aita": 0.99, "pedagogical_notes": "Validate inference, explain the concept of inferring.",
          "safeguard_tags": ["safe", "positive_feedback"], "xapi_verb_id": "provided_feedback", "ontology_concept_tags": ["inference_explanation", "metacognition_prompt"]}
@@ -209,13 +209,13 @@ def _create_vocab_dialogue_4th(passage: Dict[str, str], aita_profile: Dict[str, 
         dataset_version_suffix="ReadingComprePilot"
     )
     dialogue_json["dialogue_turns"] = [
-        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", 
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text",
          "utterance": f"In the story '{passage['title']}', it says Lily saw her '{target_word}' red house. What do you think '{target_word}' might mean here, thinking about how Lily felt and what she found?",
          "confidence_score_aita": 0.98, "pedagogical_notes": "Present word in context, prompt for meaning using clues.",
          "safeguard_tags": ["safe"], "xapi_verb_id": "asked", "ontology_concept_tags": ["vocabulary_in_context", "context_clue_prompt"]},
-        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "student", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", "utterance": student_guess, 
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "student", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", "utterance": student_guess,
          "safeguard_tags": ["safe"], "xapi_verb_id": "responded", "ontology_concept_tags": ["student_infers_vocab_meaning"]},
-        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", 
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text",
          "utterance": f"That's a great guess! '{target_word.capitalize()}' often means something like comfortable, warm, and safe. Does that fit with how Lily might feel about her house after being lost?",
          "confidence_score_aita": 0.97, "pedagogical_notes": "Affirm student's attempt, provide definition, and connect back to context for confirmation.",
          "safeguard_tags": ["safe", "positive_feedback"], "xapi_verb_id": "provided_feedback", "ontology_concept_tags": ["vocabulary_clarification", "contextual_reinforcement"]}
@@ -240,7 +240,7 @@ def generate_4th_grade_reading_comprehension_sample_dialogues(
                 student_guess = "Like, safe and warm?" if target_word == "cozy" else "Is it like a color?"
                 dialogue = _create_vocab_dialogue_4th(passage, aita_profile, dialogue_ctx, target_word, student_guess)
             else: continue
-            
+
             dialogue["last_updated_timestamp_utc"] = dialogue_ctx.get_timestamp(0)
             dialogue["session_metadata_for_teacher_oversight"]["session_duration_seconds"] = dialogue_ctx.get_total_duration(dialogue["creation_timestamp_utc"])
             dialogue["session_metadata_for_teacher_oversight"]["engagement_metrics"] = {"total_turns": dialogue_ctx.turn_counter, "student_turns": dialogue_ctx.turn_counter // 2, "aita_turns": (dialogue_ctx.turn_counter + 1) // 2}
@@ -258,25 +258,25 @@ def _create_eco_foodweb_dialogue(passage: Dict[str, str], aita_profile: Dict[str
         dataset_version_suffix="EcoPilot"
     )
     dialogue_json["dialogue_turns"] = [
-        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", 
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text",
          "utterance": f"Let's explore the '{passage['title']}' passage:\n\n\"{passage['text']}\"\n\nThe passage mentions the oak tree is a producer. What does a producer do in a food web?",
          "confidence_score_aita": 0.98, "pedagogical_notes": "Present passage, then ask a targeted question about a key concept (producer) mentioned in the text.",
          "safeguard_tags": ["safe", "on-topic"], "xapi_verb_id": "asked", "ontology_concept_tags": ["food_web_producer_definition"]},
-        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "student", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", "utterance": "It makes its own food using the sun.", 
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "student", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", "utterance": "It makes its own food using the sun.",
          "safeguard_tags": ["safe"], "xapi_verb_id": "responded", "ontology_concept_tags": ["student_defines_producer"]},
-        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", 
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text",
          "utterance": "Exactly! And where does the oak tree get its energy from? The passage mentions it.",
          "confidence_score_aita": 0.97, "pedagogical_notes": "Confirm understanding and ask for source of energy for producer, linking to text.",
          "safeguard_tags": ["safe", "scaffolding"], "xapi_verb_id": "asked", "ontology_concept_tags": ["energy_source_producer"]},
-        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "student", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", "utterance": "From the sun!", 
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "student", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", "utterance": "From the sun!",
          "safeguard_tags": ["safe"], "xapi_verb_id": "responded", "ontology_concept_tags": ["student_identifies_sun"]},
-        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", 
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text",
          "utterance": "Great! Now, what about the caterpillar? It's called a primary consumer. What does that mean based on what it eats?",
          "confidence_score_aita": 0.98, "pedagogical_notes": "Introduce new term (primary consumer) and ask student to infer meaning from context.",
          "safeguard_tags": ["safe"], "xapi_verb_id": "asked", "ontology_concept_tags": ["primary_consumer_definition_inference"]},
-        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "student", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", "utterance": "It eats the producer, the oak tree leaves.", 
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "student", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", "utterance": "It eats the producer, the oak tree leaves.",
          "safeguard_tags": ["safe"], "xapi_verb_id": "responded", "ontology_concept_tags": ["student_defines_primary_consumer"]},
-        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", 
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text",
          "utterance": "Perfect! So energy flows from the sun to the oak tree, then to the caterpillar. Can you trace the energy to the hawk based on the passage?",
          "confidence_score_aita": 0.99, "pedagogical_notes": "Summarize energy flow so far and ask student to extend it based on the text.",
          "safeguard_tags": ["safe", "positive_feedback"], "xapi_verb_id": "asked", "ontology_concept_tags": ["energy_flow_tracing", "food_web_path"]}
@@ -293,19 +293,19 @@ def _create_eco_biotic_abiotic_dialogue(passage: Dict[str, str], aita_profile: D
         dataset_version_suffix="EcoPilot"
     )
     dialogue_json["dialogue_turns"] = [
-        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", 
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text",
          "utterance": f"Let's look at the '{passage['title']}' passage:\n\n\"{passage['text']}\"\n\nThe passage says fish and frogs are 'biotic factors'. What do you think 'biotic' means based on these examples?",
          "confidence_score_aita": 0.98, "pedagogical_notes": "Present passage and ask for definition of 'biotic' based on examples.",
          "safeguard_tags": ["safe"], "xapi_verb_id": "asked", "ontology_concept_tags": ["biotic_definition_from_examples"]},
-        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "student", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", "utterance": "Living things?", 
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "student", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", "utterance": "Living things?",
          "safeguard_tags": ["safe"], "xapi_verb_id": "responded", "ontology_concept_tags": ["student_infers_biotic"]},
-        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", 
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text",
          "utterance": "That's right! Biotic factors are all the living or once-living organisms in an ecosystem. Now, the passage mentions water and sunlight as 'abiotic factors'. What could 'abiotic' mean?",
          "confidence_score_aita": 0.97, "pedagogical_notes": "Confirm biotic, then introduce abiotic with examples and ask for definition.",
          "safeguard_tags": ["safe"], "xapi_verb_id": "asked", "ontology_concept_tags": ["abiotic_definition_from_examples", "contrastive_learning"]},
-        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "student", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", "utterance": "Non-living things?", 
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "student", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", "utterance": "Non-living things?",
          "safeguard_tags": ["safe"], "xapi_verb_id": "responded", "ontology_concept_tags": ["student_infers_abiotic"]},
-        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", 
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text",
          "utterance": "Exactly! So, can you name one more biotic factor and one more abiotic factor from the pond description in the passage?",
          "confidence_score_aita": 0.98, "pedagogical_notes": "Confirm abiotic. Ask for additional examples from text to check understanding.",
          "safeguard_tags": ["safe"], "xapi_verb_id": "asked", "ontology_concept_tags": ["example_identification_biotic_abiotic", "comprehension_check"]}
@@ -322,19 +322,19 @@ def _create_eco_human_impact_dialogue(passage: Dict[str, str], aita_profile: Dic
         dataset_version_suffix="EcoPilot"
     )
     dialogue_json["dialogue_turns"] = [
-        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", 
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text",
          "utterance": f"We've been reading about ecosystems. Let's look at the '{passage['title']}' passage:\n\n\"{passage['text']}\"\n\nThis passage talks about how humans can affect rivers. Can you tell me one *negative* way humans can impact a river, based on the text?",
          "confidence_score_aita": 0.98, "pedagogical_notes": "Present passage. Ask for a negative human impact example from the text.",
          "safeguard_tags": ["safe"], "xapi_verb_id": "asked", "ontology_concept_tags": ["human_impact_negative_example_elicitation"]},
-        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "student", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", "utterance": "Pollution from factories or trash.", 
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "student", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", "utterance": "Pollution from factories or trash.",
          "safeguard_tags": ["safe"], "xapi_verb_id": "responded", "ontology_concept_tags": ["student_identifies_negative_impact"]},
-        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", 
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text",
          "utterance": "That's a key one. Now, can you find an example in the passage of a *positive* way humans can help rivers?",
          "confidence_score_aita": 0.97, "pedagogical_notes": "Acknowledge correct answer. Ask for a positive human impact example from the text.",
          "safeguard_tags": ["safe"], "xapi_verb_id": "asked", "ontology_concept_tags": ["human_impact_positive_example_elicitation"]},
-        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "student", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", "utterance": "Planting trees along riverbanks or cleaning up litter.", 
+        {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "student", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", "utterance": "Planting trees along riverbanks or cleaning up litter.",
          "safeguard_tags": ["safe"], "xapi_verb_id": "responded", "ontology_concept_tags": ["student_identifies_positive_impact"]},
-         {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text", 
+         {"turn_id": dialogue_ctx.next_turn_id(), "speaker": "AITA", "timestamp_utc": dialogue_ctx.get_timestamp(), "utterance_modality": "text",
          "utterance": "Excellent! So humans can both harm and help ecosystems. Understanding these impacts is important for protecting our environment.",
          "confidence_score_aita": 0.98, "pedagogical_notes": "Summarize and state the importance of understanding human impact.",
          "safeguard_tags": ["safe", "positive_feedback"], "xapi_verb_id": "provided_feedback", "ontology_concept_tags": ["summary_human_impact", "environmental_awareness"]}
@@ -370,7 +370,7 @@ def generate_7th_grade_science_eco_sample_dialogues(
         dialogue_ba["session_metadata_for_teacher_oversight"]["session_duration_seconds"] = dialogue_ctx_ba.get_total_duration(dialogue_ba["creation_timestamp_utc"])
         dialogue_ba["session_metadata_for_teacher_oversight"]["engagement_metrics"] = {"total_turns": dialogue_ctx_ba.turn_counter, "student_turns": dialogue_ctx_ba.turn_counter // 2, "aita_turns": (dialogue_ctx_ba.turn_counter + 1) // 2}
         all_dialogues.append(dialogue_ba)
-        
+
     # Human Impact dialogue for passage 3
     passage_human_impact = next((p for p in passages if p["id"] == "eco_passage_human_impact_001"), None)
     if passage_human_impact:
@@ -380,14 +380,14 @@ def generate_7th_grade_science_eco_sample_dialogues(
         dialogue_hi["session_metadata_for_teacher_oversight"]["session_duration_seconds"] = dialogue_ctx_hi.get_total_duration(dialogue_hi["creation_timestamp_utc"])
         dialogue_hi["session_metadata_for_teacher_oversight"]["engagement_metrics"] = {"total_turns": dialogue_ctx_hi.turn_counter, "student_turns": dialogue_ctx_hi.turn_counter // 2, "aita_turns": (dialogue_ctx_hi.turn_counter + 1) // 2}
         all_dialogues.append(dialogue_hi)
-        
+
     return all_dialogues
 
 
 # --- LLM Augmentation Prompt Generation (Placeholder - Not primary focus of this refactor) ---
 def prepare_llm_augmentation_prompt(
     learning_objective_text: str,
-    passage_text: Optional[str] = None, 
+    passage_text: Optional[str] = None,
     aita_profile: Optional[Dict[str, Any]] = None,
     example_aita_json_structure: Optional[Dict[str, Any]] = None
 ) -> str:
@@ -423,7 +423,7 @@ if __name__ == "__main__":
     # --- 4th Grade Reading Comprehension ---
     reading_aita_profile_pilot = {
         "subject": "Reading Comprehension", "grade_level": "4",
-        "jurisdiction": "US Common Core ELA Alignment (Simulated)", 
+        "jurisdiction": "US Common Core ELA Alignment (Simulated)",
         "persona_name": "ReaderAITA_Explorer_v1.3_Pilot",
         "target_audience_description": "4th-grade students (typically 9-10 years old) working on foundational reading skills."
     }
@@ -460,5 +460,5 @@ if __name__ == "__main__":
 
         save_structured_data(eco_dialogues, "eco_explorer_aita_sample_data.json")
     print("-" * 30)
-    
+
     print("\nScript execution finished.")

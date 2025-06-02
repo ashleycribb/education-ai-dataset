@@ -79,7 +79,7 @@ Once the container is running, you can test the endpoints using a tool like `cur
       "grade_level": 4,
       "preferred_aita_persona_id": "ReadingExplorerAITA_4thGrade_v1_adapter",
       "user_id": "generated_uuid_string_for_jane",
-      "created_at": "2024-08-01T12:00:00.000000Z" 
+      "created_at": "2024-08-01T12:00:00.000000Z"
     }
     ```
 *   **Example Response (Failure - Status 400, Username Exists)**:
@@ -102,7 +102,7 @@ Once the container is running, you can test the endpoints using a tool like `cur
       "grade_level": 4,
       "preferred_aita_persona_id": "ReadingExplorerAITA_4thGrade_v1_adapter",
       "user_id": "your_user_id_here",
-      "created_at": "2024-08-01T12:00:00.000000Z" 
+      "created_at": "2024-08-01T12:00:00.000000Z"
     }
     ```
 *   **Example Response (Failure - Status 404, User Not Found)**:
@@ -120,8 +120,8 @@ Once the container is running, you can test the endpoints using a tool like `cur
     curl -X POST "http://localhost:8000/interact" \
          -H "Content-Type: application/json" \
          -d '{
-               "user_id": "your_user_id_here", 
-               "aita_persona_id": "default_phi3_base", 
+               "user_id": "your_user_id_here",
+               "aita_persona_id": "default_phi3_base",
                "user_utterance": "Hello AITA, can you help me with main idea?",
                "conversation_history": []
              }'
@@ -134,7 +134,7 @@ Once the container is running, you can test the endpoints using a tool like `cur
       "debug_info": {
         "model_used": "microsoft/Phi-3-mini-4k-instruct",
         "aita_persona_requested": "default_phi3_base",
-        "user_profile_found": true 
+        "user_profile_found": true
       }
     }
     ```

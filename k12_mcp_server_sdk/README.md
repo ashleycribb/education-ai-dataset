@@ -1,8 +1,8 @@
 # K-12 Model Context Protocol (MCP) Server SDK
 
-A Python SDK to simplify building K-12 focused Model Context Protocol (MCP) servers. 
-This SDK provides base classes and utilities that wrap the core `modelcontextprotocol` library, 
-making it easier to create educational tools and resource providers that can communicate 
+A Python SDK to simplify building K-12 focused Model Context Protocol (MCP) servers.
+This SDK provides base classes and utilities that wrap the core `modelcontextprotocol` library,
+making it easier to create educational tools and resource providers that can communicate
 with MCP-compliant AI tutors and learning platforms.
 
 ## Features (Planned)
@@ -33,8 +33,8 @@ This server will respond to GET requests on the `/hello` resource path and the `
 from typing import Dict, Any, Optional
 
 from k12_mcp_server_sdk import (
-    SimplifiedMCPServer, 
-    BaseK12ResourceHandler, 
+    SimplifiedMCPServer,
+    BaseK12ResourceHandler,
     ResourceResponse,
     create_success_response,
     create_error_response
@@ -60,14 +60,14 @@ class HelloResourceHandler(BaseK12ResourceHandler):
     ) -> ResourceResponse:
         if self.logger:
             self.logger.info(f"HelloResourceHandler: Handling GET. Path: {path_params}, Query: {query_params}")
-        
+
         name = query_params.get("name", "Guest")
-        
+
         if name.lower() == "error":
             if self.logger:
                 self.logger.warning("HelloResourceHandler: Simulating an error for name='error'.")
             return create_error_response("Simulated error: Name 'error' is not allowed.", 400, "INVALID_NAME")
-            
+
         payload = {"greeting": self.message_template.format(name=name)}
         return create_success_response(payload=payload)
 
@@ -78,14 +78,14 @@ class StudentDataHandler(BaseK12ResourceHandler):
             "student123": {"name": "Alice", "grade": 4, "topic": "Fractions"},
             "student456": {"name": "Bob", "grade": 5, "topic": "Ecosystems"}
         }
-    
+
     def handle_get(
         self, path_params: Dict[str, str], query_params: Dict[str, str], **kwargs
     ) -> ResourceResponse:
         student_id = path_params.get("student_id")
         if not student_id:
             return create_error_response("student_id path parameter is required.", 400, "MISSING_PATH_PARAM")
-        
+
         student_data = self.mock_student_db.get(student_id)
         if student_data:
             return create_success_response(student_data)
@@ -101,12 +101,12 @@ if __name__ == "__main__":
 
     server.add_resource_handler(path_pattern="/hello", handler_instance=hello_handler)
     server.add_resource_handler(path_pattern="/student/{student_id}/info", handler_instance=student_handler)
-    
+
     logger.info("Starting K-12 MCP example server (stdio mode)...")
     print("\\nSend JSON MCP requests via stdin. Examples:")
     print('  {"mcp_version": "0.1.0", "request_id": "req1", "resource_path": "/hello", "query_params": {"name": "World"}}')
     print('  {"mcp_version": "0.1.0", "request_id": "req2", "resource_path": "/student/student123/info"}\\n')
-    
+
     server.run()
 ```
 

@@ -36,7 +36,7 @@ RUN pip install --no-cache-dir \
 # 4. Copy Application Code
 COPY aita_interaction_service.py .
 # If you had other modules like a local moderation_service.py, copy them too:
-# COPY moderation_service.py . 
+# COPY moderation_service.py .
 
 # 5. Expose Port
 EXPOSE 8000
