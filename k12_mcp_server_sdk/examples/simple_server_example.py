@@ -1,8 +1,8 @@
 from typing import Dict, Any, Optional
 
 from k12_mcp_server_sdk import (
-    SimplifiedMCPServer,
-    BaseK12ResourceHandler,
+    SimplifiedMCPServer, 
+    BaseK12ResourceHandler, 
     ResourceResponse,
     create_success_response,
     create_error_response
@@ -31,12 +31,12 @@ class HelloResourceHandler(BaseK12ResourceHandler):
     ) -> ResourceResponse:
         if self.logger:
             self.logger.info(f"HelloResourceHandler: Handling GET request. Path params: {path_params}, Query params: {query_params}")
-
+        
         # Example: Use a query parameter 'name' to customize the response
         name = query_params.get("name", "Guest")
-
+        
         # Example: Use a path parameter 'version' (if path was /hello/{version})
-        # api_version = path_params.get("version", "v1")
+        # api_version = path_params.get("version", "v1") 
 
         if name.lower() == "error": # Simulate an error
             if self.logger:
@@ -46,7 +46,7 @@ class HelloResourceHandler(BaseK12ResourceHandler):
                 status_code=400,
                 error_code="INVALID_NAME"
             )
-
+            
         payload = {
             "greeting": self.message_template.format(name=name),
             "timestamp": self.get_current_timestamp() # Example of using a method from a base or self
@@ -65,14 +65,14 @@ class StudentDataHandler(BaseK12ResourceHandler):
             "student123": {"name": "Alice Wonderland", "grade": 4, "current_topic": "Fractions"},
             "student456": {"name": "Bob The Builder", "grade": 5, "current_topic": "Ecosystems"}
         }
-
+    
     def handle_get(
         self, path_params: Dict[str, str], query_params: Dict[str, str], **kwargs
     ) -> ResourceResponse:
         student_id = path_params.get("student_id")
         if not student_id:
             return create_error_response("student_id path parameter is required.", 400, "MISSING_PATH_PARAM")
-
+        
         student_data = self.mock_student_db.get(student_id)
         if student_data:
             return create_success_response(student_data)
@@ -82,7 +82,7 @@ class StudentDataHandler(BaseK12ResourceHandler):
 
 if __name__ == "__main__":
     print("--- K-12 MCP SDK: Simple Server Example ---")
-
+    
     # Initialize a logger (optional)
     logger = ConsoleLogger()
     logger.info("Logger initialized for example server.")
@@ -103,7 +103,7 @@ if __name__ == "__main__":
     server.add_resource_handler(path_pattern="/hello", handler_instance=hello_handler)
     # Example with path parameters:
     server.add_resource_handler(path_pattern="/student/{student_id}/info", handler_instance=student_data_handler)
-
+    
     # Example: How a tool handler would be added (though BaseK12ToolHandler needs full definition for useful example)
     # from modelcontextprotocol.protocol import ParameterDefinition, ParameterType
     # class MySimpleToolHandler(BaseK12ToolHandler):

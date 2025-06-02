@@ -54,12 +54,12 @@ This workflow describes how to obtain and process narrative texts suitable for 4
         [
             {
                 "id": "gutenberg_story1",
-                "topic": "Story 1",
+                "topic": "Story 1", 
                 "raw_text": "Once upon a time, a little rabbit lived in a forest...",
                 "source_name": "Project Gutenberg",
-                "source_url": "Project Gutenberg - Story 1",
+                "source_url": "Project Gutenberg - Story 1", 
                 "license": "Public Domain",
-                "potential_grade_level": "3-5",
+                "potential_grade_level": "3-5", 
                 "subject": "Reading Comprehension"
             },
             // ... more stories ...
@@ -119,12 +119,12 @@ This workflow describes how to obtain and process informational texts for 7th-gr
         [
             {
                 "id": "openstax_conbio_sec19.1_s1_p1",
-                "topic": "19.1 Population Ecology",
+                "topic": "19.1 Population Ecology", 
                 "raw_text": "Populations are dynamic entities. Their size and composition fluctuate...",
                 "source_name": "OpenStax Concepts of Biology",
                 "source_url": "https://openstax.org/books/concepts-biology/pages/19-1-population-ecology",
                 "license": "CC BY 4.0",
-                "potential_grade_level": "7-9",
+                "potential_grade_level": "7-9", 
                 "subject": "Science - Ecology"
             },
             // ... more segments ...
@@ -139,7 +139,7 @@ This workflow describes how to obtain and process informational texts for 7th-gr
         "min_words": 10,
         "max_words": 1000, # Scientific text can be longer
         "keywords_any": ["population", "ecosystem", "density", "producer", "sunlight", "biotic", "abiotic"],
-        "grade_level": "7-9"
+        "grade_level": "7-9" 
     }
     ```
     Adjust these criteria based on the specific content and needs.

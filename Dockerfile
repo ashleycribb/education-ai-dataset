@@ -4,26 +4,16 @@ FROM python:3.9-slim
 # 2. Set Working Directory
 WORKDIR /app
 
-# 3. Copy and Install Requirements
-# Conceptual requirements.txt content:
-# fastapi
-# uvicorn[standard] # For ASGI server
-# torch
-# torchvision
-# torchaudio
-# transformers
-# pydantic
-# sentencepiece # Often a dependency for tokenizers
-# accelerate # Often useful for transformers, though not strictly needed for this simple service yet
+# 3. Install System Dependencies (if any, e.g., for specific ML model backends)
+# RUN apt-get update && apt-get install -y --no-install-recommends some-system-lib && rm -rf /var/lib/apt/lists/*
 
-# For a real build, you'd have a requirements.txt file:
+# 4. Copy and Install Python Requirements
+# For a real build, use a requirements.txt file:
 # COPY requirements.txt .
 # RUN pip install --no-cache-dir -r requirements.txt
 
 # For this prototype, install directly.
-# Note: Installing torch with CUDA support in Docker can be complex and requires nvidia-docker.
-# This Dockerfile assumes CPU or a base torch installation. For GPU, specific torch versions
-# and base images (e.g., nvidia/cuda) are needed.
+# Using CPU-only PyTorch for simpler Docker builds. For GPU, refer to NVIDIA CUDA base images.
 RUN pip install --no-cache-dir \
     fastapi \
     "uvicorn[standard]" \
@@ -31,21 +21,38 @@ RUN pip install --no-cache-dir \
     transformers \
     pydantic \
     sentencepiece \
-    accelerate
+    accelerate \
+    peft # Added PEFT for LoRA adapters
 
-# 4. Copy Application Code
+# 5. Copy Application Code
+# Assuming all necessary Python files are in the root of the build context
 COPY aita_interaction_service.py .
-# If you had other modules like a local moderation_service.py, copy them too:
-# COPY moderation_service.py .
+COPY moderation_service.py . 
+# If xapi_utils is a separate file and not part of an installed SDK:
+# COPY k12_mcp_client_sdk/xapi_utils.py k12_mcp_client_sdk/ # Create dir and copy
+# For simplicity, if xapi_utils.py is needed, ensure it's in the root or adjust path.
+# For this exercise, we assume xapi_utils might be part of k12_mcp_client_sdk
+# that would be installed via pip if it were a proper package.
+# If k12_mcp_client_sdk is local, it needs to be copied:
+# COPY k12_mcp_client_sdk/ k12_mcp_client_sdk/
 
-# 5. Expose Port
+# Ensure the k12_mcp_client_sdk is available for import
+# If it's a local directory SDK:
+COPY k12_mcp_client_sdk/ k12_mcp_client_sdk/
+# Add current directory to PYTHONPATH to allow imports from k12_mcp_client_sdk
+ENV PYTHONPATH "${PYTHONPATH}:/app"
+
+
+# 6. Create Placeholder Adapter Directories (as defined in ADAPTER_CONFIG)
+# These are created so the os.path.exists() checks in the service don't immediately fail
+# if actual adapter files are not mounted or copied.
+RUN mkdir -p /app/adapters/reading_explorer_pilot1
+RUN mkdir -p /app/adapters/eco_explorer_pilot1
+# Add more RUN mkdir -p for other adapter paths defined in ADAPTER_CONFIG
+
+# 7. Expose Port
 EXPOSE 8000
 
-# 6. Command to Run Application
-# This will run the FastAPI app using Uvicorn.
-# The service script itself has `uvicorn.run(app, host="0.0.0.0", port=8000)`
-# so just running the python script is enough.
+# 8. Command to Run Application
+# The service script (aita_interaction_service.py) calls uvicorn.run() itself.
 CMD ["python", "aita_interaction_service.py"]
-
-# Alternatively, you can run uvicorn directly if the script doesn't call uvicorn.run():
-# CMD ["uvicorn", "aita_interaction_service:app", "--host", "0.0.0.0", "--port", "8000"]

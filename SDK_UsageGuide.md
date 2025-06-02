@@ -56,7 +56,7 @@ class MyEchoHandler(BaseK12ResourceHandler):
         # self.logger is available from BaseK12ResourceHandler if a logger is passed to __init__
         if self.logger:
             self.logger.info(f"MyEchoHandler received GET with query_params: {query_params}")
-
+        
         # Create a payload that echoes back the query parameters
         response_payload = {
             "message": "Echoing your query parameters.",
@@ -67,17 +67,17 @@ class MyEchoHandler(BaseK12ResourceHandler):
 if __name__ == "__main__":
     # Initialize the server with a logger
     sdk_server = SimplifiedMCPServer(logger=logger)
-
+    
     # Instantiate your handler, passing the logger
     echo_handler = MyEchoHandler(logger=logger)
-
+    
     # Register the handler for a specific path
     sdk_server.add_resource_handler("/echo", echo_handler)
-
+    
     logger.info("Starting SDK example server. Listening on /echo via stdio.")
     logger.info("To test, send an MCP JSON request to stdin, e.g.:")
     logger.info('{"mcp_version": "0.1.0", "request_id": "req1", "resource_path": "/echo", "query_params": {"message": "Hello SDK"}}')
-
+    
     sdk_server.run()
 ```
 
@@ -119,29 +119,29 @@ logger = logging.getLogger(__name__)
 if __name__ == "__main__":
     # Initialize client for stdio communication
     sdk_client = SimplifiedMCPClient(client_type="stdio", logger=logger)
-
+    
     log_file = "sdk_client_example.jsonl"
     session_id_example = "session_sdk_test_001"
 
     try:
         sdk_client.start() # Important for stdio client
-
+        
         logger.info("Querying /echo resource from a piped MCP server...")
-        # This assumes an MCP server (like the server SDK example) is running
+        # This assumes an MCP server (like the server SDK example) is running 
         # and its stdout is piped to this client's stdin.
         resource_payload = sdk_client.get_resource_data(
-            path="/echo",
+            path="/echo", 
             query_params={"message": "Hello from K-12 Client SDK"}
         )
-
+        
         if resource_payload:
             logger.info(f"Server response: {resource_payload}")
-
+            
             # Log the interaction using xAPI utils
             statement = create_interaction_xapi_statement(
-                actor_name="SDKExampleUser",
+                actor_name="SDKExampleUser", 
                 actor_account_name="sdkuser@example.com", # Unique identifier for the user
-                verb_id="http://example.com/verbs/queried_resource",
+                verb_id="http://example.com/verbs/queried_resource", 
                 verb_display="queried an MCP resource",
                 object_activity_id="http://example.com/activities/echo_resource_test",
                 object_activity_name="Echo Resource Test (Client SDK)",

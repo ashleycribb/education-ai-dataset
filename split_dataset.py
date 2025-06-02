@@ -58,7 +58,7 @@ def split_data(
         return {"train": [], "validation": [], "test": []}
 
     n_total = len(data)
-
+    
     # Specific adjustment for 6 items to get 4-1-1 split
     if n_total == 6:
         n_train = 4
@@ -96,16 +96,16 @@ def split_data(
 
     # Seed for reproducibility
     random.seed(random_seed)
-
+    
     # Shuffle a copy of the data
     data_copy = list(data) # Create a shallow copy for shuffling
     random.shuffle(data_copy)
-
+    
     # Perform splits
     train_data = data_copy[:n_train]
     val_data = data_copy[n_train : n_train + n_val]
     test_data = data_copy[n_train + n_val :]
-
+    
     return {"train": train_data, "validation": val_data, "test": test_data}
 
 # 3. Helper function to save data
@@ -121,29 +121,29 @@ def save_split_data(data: List[Dict[str, Any]], filename: str):
 # 4. Main Execution Block
 if __name__ == "__main__":
     print("--- Starting Dataset Splitting ---")
-
+    
     # Use the predefined simulated data
     all_data = SIMULATED_AITA_DATA
     print(f"Total items in simulated dataset: {len(all_data)}")
-
+    
     # Split the data
     # For N=6, this will result in 4 train, 1 validation, 1 test due to hardcoded logic
-    split_datasets = split_data(all_data)
-
+    split_datasets = split_data(all_data) 
+    
     train_set = split_datasets["train"]
     validation_set = split_datasets["validation"]
     test_set = split_datasets["test"]
-
+    
     print(f"\nNumber of items in training set: {len(train_set)}")
     print(f"Number of items in validation set: {len(validation_set)}")
     print(f"Number of items in test set: {len(test_set)}")
-
+    
     # Save each split to a file
     print("\n--- Saving Split Datasets ---")
     save_split_data(train_set, "train_split.json")
     save_split_data(validation_set, "validation_split.json")
     save_split_data(test_set, "test_split.json")
-
+    
     print("\n--- Dataset Splitting Finished ---")
 
     # Optional: Print dialogue_ids in each set to verify the split

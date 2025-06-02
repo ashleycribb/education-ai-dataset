@@ -5,7 +5,7 @@ from modelcontextprotocol.protocol import ToolInvocation, ToolResult
 from modelcontextprotocol.server import ResourceHandler, ToolHandler, ResourceResponse
 
 from .responses import (
-    create_success_response,
+    create_success_response, 
     create_error_response,
     create_success_tool_result,
     create_error_tool_result
@@ -81,11 +81,11 @@ class BaseK12ToolHandler(ToolHandler, ABC):
         try:
             if self.logger:
                 self.logger.info(f"BaseK12ToolHandler ({self.name}): Received invocation with inputs: {invocation.inputs}")
-
+            
             # The 'inputs' field of ToolInvocation is already a Dict[str, Any]
             tool_outputs = self.handle_invoke(invocation.inputs, **kwargs)
             return create_success_tool_result(outputs=tool_outputs, tool_name=self.name)
-
+        
         except NotImplementedError:
             if self.logger:
                 self.logger.error(f"BaseK12ToolHandler ({self.name}): Method not implemented by subclass.")
@@ -100,7 +100,7 @@ class BaseK12ToolHandler(ToolHandler, ABC):
             return create_error_tool_result(
                 tool_name=self.name,
                 error_message=str(ve),
-                error_code="INVALID_TOOL_INPUT"
+                error_code="INVALID_TOOL_INPUT" 
             )
         except Exception as e:
             if self.logger:

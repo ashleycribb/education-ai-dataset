@@ -22,7 +22,7 @@ def process_gutenberg_files(input_dir: str, output_file: str):
         if filename.endswith(".txt"):
             file_path = os.path.join(input_dir, filename)
             story_id_base = os.path.splitext(filename)[0] # e.g., "story1"
-
+            
             try:
                 with open(file_path, 'r', encoding='utf-8') as f:
                     raw_text_content = f.read()
@@ -33,7 +33,7 @@ def process_gutenberg_files(input_dir: str, output_file: str):
                 #    text = text.split("*** START OF THIS PROJECT GUTENBERG EBOOK")[1]
                 #    text = text.split("*** END OF THIS PROJECT GUTENBERG EBOOK")[0]
                 #    For this prototype, our placeholder files are assumed clean.
-                cleaned_text = raw_text_content.strip()
+                cleaned_text = raw_text_content.strip() 
                 # 2. Normalize whitespace (e.g., multiple newlines to one)
                 cleaned_text = "\n".join([line.strip() for line in cleaned_text.splitlines() if line.strip()])
 

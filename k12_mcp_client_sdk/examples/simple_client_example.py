@@ -20,7 +20,7 @@ class ConsoleLogger:
 
 if __name__ == "__main__":
     print("--- K-12 MCP Client SDK: Simple Client Example ---")
-
+    
     logger = ConsoleLogger()
     logger.info("Logger initialized for client example.")
 
@@ -42,7 +42,7 @@ if __name__ == "__main__":
         # 1. Example: Call get_resource_data
         logger.info("Attempting to get resource: /hello?name=SDK Client User")
         resource_data = client.get_resource_data(
-            path="/hello",
+            path="/hello", 
             query_params={"name": "SDK Client User"}
         )
 
@@ -96,7 +96,7 @@ if __name__ == "__main__":
         # 3. Example: How a tool invocation might look (conceptual, tool not in simple_server_example)
         # logger.info("Conceptually invoking a tool 'echo_tool'...")
         # tool_outputs = client.invoke_tool_outputs(
-        #     tool_name="echo_tool",
+        #     tool_name="echo_tool", 
         #     inputs={"message": "Hello from client SDK!"}
         # )
         # if tool_outputs:

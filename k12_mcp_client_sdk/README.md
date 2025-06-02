@@ -1,7 +1,7 @@
 # K-12 Model Context Protocol (MCP) Client SDK
 
 A Python SDK to simplify interactions with K-12 focused Model Context Protocol (MCP) servers.
-This SDK provides a `SimplifiedMCPClient` for communicating via StdIO or HTTP,
+This SDK provides a `SimplifiedMCPClient` for communicating via StdIO or HTTP, 
 and utilities for creating xAPI-like statements to log educational interactions.
 
 ## Features
@@ -26,14 +26,14 @@ and utilities for creating xAPI-like statements to log educational interactions.
 
 ## Basic Usage
 
-The following example demonstrates how to set up and use the `SimplifiedMCPClient`
+The following example demonstrates how to set up and use the `SimplifiedMCPClient` 
 to interact with an MCP server (assumed to be running in stdio mode for this example)
 and log interactions using the xAPI utilities.
 
 ```python
 # examples/simple_client_example.py
 from typing import Optional, Any
-import datetime
+import datetime 
 import json # For pretty printing in example
 
 from k12_mcp_client_sdk import (
@@ -54,7 +54,7 @@ class ConsoleLogger:
 if __name__ == "__main__":
     logger = ConsoleLogger()
     client = SimplifiedMCPClient(client_type="stdio", logger=logger)
-
+    
     session_id = "session_client_example_001"
     user_name_for_log = "ClientSDKUser"
     user_account_for_log = "clientsdkuser@example.com"
@@ -66,7 +66,7 @@ if __name__ == "__main__":
 
         # Example: Get a resource
         resource_data = client.get_resource_data(
-            path="/hello",
+            path="/hello", 
             query_params={"name": "SDK Client User"}
         )
 
@@ -83,7 +83,7 @@ if __name__ == "__main__":
                 object_activity_name="Hello World Resource (SDK Example)",
                 object_activity_description="A simple resource that returns a greeting.",
                 session_id=session_id,
-                result_response=json.dumps(resource_data)
+                result_response=json.dumps(resource_data) 
             )
             log_xapi_statement(statement, example_log_file, logger)
         else:
@@ -95,7 +95,7 @@ if __name__ == "__main__":
         logger.info("Stopping SimplifiedMCPClient...")
         client.stop()
         logger.info("Client example finished.")
-
+    
     print(f"Check '{example_log_file}' for xAPI-like statements.")
 ```
 

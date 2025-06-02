@@ -22,7 +22,7 @@ from trl import SFTTrainer
 model_name_or_path = "microsoft/Phi-3-mini-4k-instruct"
 
 # Dataset for the primary AITA profile (e.g., Reading Comprehension)
-dataset_path = "initial_structured_aita_data.json"
+dataset_path = "initial_structured_aita_data.json" 
 output_dir = "./test_run_results" # Changed for smoke test
 
 # --- Conceptual Comments for Multi-AITA Profile Training ---
@@ -34,7 +34,7 @@ output_dir = "./test_run_results" # Changed for smoke test
 #    dataset_path = "eco_explorer_aita_sample_data.json" # Or "eco_explorer_train_split.json" if pre-split
 #
 # 3. Update `output_dir` to save the new AITA's adapter to a different location:
-#    output_dir = "./results_phi3_aita_eco_pilot"
+#    output_dir = "./results_phi3_aita_eco_pilot" 
 #
 # 4. System Prompt Considerations for SFT Data Formatting:
 #    The `format_dialogue_for_sft` function uses `tokenizer.apply_chat_template`.
@@ -78,13 +78,13 @@ def load_model_and_tokenizer(model_name: str):
     tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
-
+    
     print(f"Tokenizer loaded. Pad token: {tokenizer.pad_token}, EOS token: {tokenizer.eos_token}")
     print(f"Default chat template: {tokenizer.chat_template or 'Not set in tokenizer, will use manual formatting.'}")
 
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
-        device_map="auto",
+        device_map="auto", 
         trust_remote_code=True,
         torch_dtype=torch.bfloat16 if use_bf16 else (torch.float16 if use_fp16 else torch.float32)
     )
@@ -95,10 +95,10 @@ def load_model_and_tokenizer(model_name: str):
 def format_dialogue_for_sft(example: Dict[str, Any], tokenizer: AutoTokenizer) -> Dict[str, str]:
     # This function assumes 'dialogue_turns' field exists based on `data_processing_scripts.py`
     # For the enhanced AITA JSON, the actual turns are in 'dialogue_turns'.
-    dialogue_turns_data = example.get('dialogue_turns', [])
+    dialogue_turns_data = example.get('dialogue_turns', []) 
     if not dialogue_turns_data: # Check if 'dialogue_turns' is missing or empty
         # Fallback for old format if 'dialogue' field (no 's') exists
-        dialogue_turns_data = example.get('dialogue', [])
+        dialogue_turns_data = example.get('dialogue', []) 
         if not dialogue_turns_data:
             return {"text": ""}
 
@@ -112,7 +112,7 @@ def format_dialogue_for_sft(example: Dict[str, Any], tokenizer: AutoTokenizer) -
     for turn in dialogue_turns_data:
         speaker = turn.get("speaker", "").lower()
         utterance = turn.get("utterance", "")
-
+        
         if speaker == "student" or speaker == "user":
             messages.append({"role": "user", "content": utterance})
         elif speaker == "aita" or speaker == "assistant":
@@ -126,9 +126,9 @@ def format_dialogue_for_sft(example: Dict[str, Any], tokenizer: AutoTokenizer) -
         pass
 
     formatted_text = tokenizer.apply_chat_template(
-        messages,
-        tokenize=False,
-        add_generation_prompt=False
+        messages, 
+        tokenize=False, 
+        add_generation_prompt=False 
     )
     return {"text": formatted_text}
 
@@ -138,7 +138,7 @@ def load_and_prepare_dataset(dataset_path: str, tokenizer: AutoTokenizer):
     try:
         # This assumes the JSON contains a list of dialogue objects.
         # If JSONL, use: dataset = load_dataset('json', data_files=dataset_path, split='train', lines=True)
-        dataset = load_dataset('json', data_files=dataset_path, split='train')
+        dataset = load_dataset('json', data_files=dataset_path, split='train') 
         print(f"Dataset loaded from {dataset_path}. Number of examples: {len(dataset)}")
     except Exception as e:
         print(f"Error loading dataset: {e}")
@@ -150,7 +150,7 @@ def load_and_prepare_dataset(dataset_path: str, tokenizer: AutoTokenizer):
 
     formatted_dataset = dataset.map(
         lambda example: format_dialogue_for_sft(example, tokenizer),
-        remove_columns=[col for col in dataset.column_names if col != "text"]
+        remove_columns=[col for col in dataset.column_names if col != "text"] 
     )
     formatted_dataset = formatted_dataset.filter(lambda example: len(example['text']) > 0)
     print(f"Dataset formatted. Number of examples after formatting/filtering: {len(formatted_dataset)}")
@@ -159,7 +159,7 @@ def load_and_prepare_dataset(dataset_path: str, tokenizer: AutoTokenizer):
 # --- 4. PEFT Configuration (LoRA) ---
 def get_lora_config():
     peft_config = LoraConfig(
-        r=lora_r, lora_alpha=lora_alpha, target_modules=target_modules,
+        r=lora_r, lora_alpha=lora_alpha, target_modules=target_modules, 
         lora_dropout=lora_dropout, bias="none", task_type="CAUSAL_LM"
     )
     print("LoRA config created.")
@@ -168,12 +168,12 @@ def get_lora_config():
 # --- 5. Training Arguments ---
 def get_training_args():
     training_args = TrainingArguments(
-        output_dir=output_dir, num_train_epochs=num_train_epochs, max_steps=3,
-        per_device_train_batch_size=per_device_train_batch_size,
-        per_device_eval_batch_size=per_device_eval_batch_size,
+        output_dir=output_dir, num_train_epochs=num_train_epochs, max_steps=3, 
+        per_device_train_batch_size=per_device_train_batch_size, 
+        per_device_eval_batch_size=per_device_eval_batch_size, 
         gradient_accumulation_steps=gradient_accumulation_steps,
-        learning_rate=learning_rate, logging_steps=logging_steps,
-        logging_dir="./test_run_logs", save_steps=save_steps,
+        learning_rate=learning_rate, logging_steps=logging_steps, 
+        logging_dir="./test_run_logs", save_steps=save_steps, 
         save_total_limit=save_total_limit, fp16=use_fp16, bf16=use_bf16,
         optim="paged_adamw_8bit"
     )
@@ -184,7 +184,7 @@ def get_training_args():
 def initialize_trainer(model, tokenizer, train_dataset, peft_config, training_args):
     trainer = SFTTrainer(
         model=model, tokenizer=tokenizer, train_dataset=train_dataset,
-        peft_config=peft_config, dataset_text_field="text",
+        peft_config=peft_config, dataset_text_field="text",  
         max_seq_length=max_seq_length, args=training_args,
     )
     print("SFTTrainer initialized.")
@@ -207,9 +207,9 @@ if __name__ == "__main__":
         ]
         with open(dataset_path, 'w') as f: json.dump(dummy_dialogues, f)
         print(f"Created a dummy dataset at {dataset_path} for setup demonstration.")
-
+    
     train_dataset = load_and_prepare_dataset(dataset_path, tokenizer)
-
+    
     if len(train_dataset) > 0:
         print("\nSample of formatted training data (first example):")
         print(f"'{train_dataset[0]['text']}'") # Added quotes for clarity
@@ -226,13 +226,13 @@ if __name__ == "__main__":
     trainer = initialize_trainer(model, tokenizer, train_dataset, peft_config, training_args)
     print("Trainer setup is complete and ready for training.")
 
-    print("\n--- Step 6: Training ---")
-    print("Starting training...")
-    trainer.train()
-    print("Training finished.")
-
+    print("\n--- Step 6: Training ---") 
+    print("Starting training...") 
+    trainer.train() 
+    print("Training finished.") 
+    
     print("\n# To save the fine-tuned model adapters, uncomment:")
     print("# trainer.save_model(os.path.join(output_dir, 'final_checkpoint'))")
     print("# print(f'Model adapters saved to {os.path.join(output_dir, 'final_checkpoint')}')")
-
+    
     print("\n--- Fine-tuning script setup finished. ---")
