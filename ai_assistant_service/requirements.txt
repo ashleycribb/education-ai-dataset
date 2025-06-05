@@ -1,5 +1,6 @@
 fastapi
 uvicorn[standard]
 pydantic
+requests
 databases[postgresql,asyncpg]
 python-dotenv

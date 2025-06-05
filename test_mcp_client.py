@@ -85,7 +85,7 @@ def test_update_context(initial_timestamp_str):
     else:
         updated_timestamp_str = data["lastUpdated"]
     updated_dt = datetime.fromisoformat(updated_timestamp_str)
-    
+
     # Ensure they are both offset-aware for comparison
     if initial_dt.tzinfo is None:
         initial_dt = initial_dt.replace(tzinfo=timezone.utc)
@@ -101,7 +101,7 @@ def test_delete_context():
     response = requests.delete(f"{BASE_URL}/{TEST_CONTEXT_ID}")
     print_response(response)
     # The FastAPI app returns the deleted item with 200, not 204
-    assert response.status_code == 200, f"Expected 200, got {response.status_code}" 
+    assert response.status_code == 200, f"Expected 200, got {response.status_code}"
 
     print(f"--- Verifying DELETE by GET {BASE_URL}/{TEST_CONTEXT_ID} ---")
     getResponse = requests.get(f"{BASE_URL}/{TEST_CONTEXT_ID}")
@@ -122,7 +122,7 @@ if __name__ == "__main__":
     assert created_context["lastUpdated"] == retrieved_context["lastUpdated"], \
         f"Timestamp mismatch: {created_context['lastUpdated']} vs {retrieved_context['lastUpdated']}"
     print(f"Timestamp consistency for initial set/get: {created_context['lastUpdated']}")
-    
+
     test_get_nonexistent_context()
     test_update_context(created_context["lastUpdated"])
     test_delete_context()

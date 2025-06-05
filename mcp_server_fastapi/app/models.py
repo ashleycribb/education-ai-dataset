@@ -18,7 +18,7 @@ class ContextData(BaseModel):
         # it uses the field names (e.g., context_id) if the alias (contextId) is not present.
         # And when serializing, it uses the alias.
         by_alias = True
-        
+
     @validator('last_updated', pre=True, always=True)
     def set_last_updated(cls, v):
         return v or datetime.utcnow()
