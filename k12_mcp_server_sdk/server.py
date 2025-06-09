@@ -10,10 +10,10 @@ class SimplifiedMCPServer:
     A simplified server wrapper for MCPStdIOServer or MCPHTTPServer.
     """
     def __init__(
-        self, 
-        server_type: str = "stdio", 
-        host: str = "localhost", 
-        port: int = 8080, 
+        self,
+        server_type: str = "stdio",
+        host: str = "localhost",
+        port: int = 8080,
         logger: Optional[Any] = None
     ):
         self.logger = logger
@@ -30,13 +30,13 @@ class SimplifiedMCPServer:
             self._server = MCPHTTPServer(host=host, port=port, tools=self._tools, handlers={})
         else:
             raise ValueError(f"Unsupported server_type: {server_type}. Choose 'stdio' or 'http'.")
-        
+
         if self.logger:
             self.logger.info(f"SimplifiedMCPServer initialized with type: {self.server_type}")
 
     def add_resource_handler(
-        self, 
-        path_pattern: str, 
+        self,
+        path_pattern: str,
         handler_instance: BaseK12ResourceHandler
     ):
         """
@@ -63,7 +63,7 @@ class SimplifiedMCPServer:
             self._tools.append(handler_instance)
             if self.logger:
                 self.logger.info(f"Added tool handler: {handler_instance.name}")
-            
+
             # If server is already instantiated and supports dynamic tool addition (less common for stdio)
             # if hasattr(self._server, 'add_tool'): # Hypothetical method
             #     self._server.add_tool(handler_instance)
@@ -87,7 +87,7 @@ class SimplifiedMCPServer:
         """
         if self.logger:
             self.logger.info(f"Starting MCP server (type: {self.server_type})...")
-        
+
         # For MCPStdIOServer, ensure tools collected via add_tool_handler are part of the server instance
         # if self.server_type == "stdio" and isinstance(self._server, MCPStdIOServer):
             # If the server was initialized with an empty tool list, update it.

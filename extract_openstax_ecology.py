@@ -13,7 +13,7 @@ def fetch_and_parse_openstax_content(url: str):
     relevant text segments from the main content area.
     """
     extracted_segments = []
-    
+
     try:
         print(f"Fetching content from: {url}")
         response = requests.get(url, timeout=10) # Added timeout
@@ -26,7 +26,7 @@ def fetch_and_parse_openstax_content(url: str):
         print("Using simulated HTML content due to fetch error.")
         html_content = """
         <html><head><title>Population Ecology</title></head><body>
-        <div id="main-content" class="main-content"> 
+        <div id="main-content" class="main-content">
             <div class="section" data-content-id="19-1-section-title">
                 <h2>19.1 Population Ecology</h2>
                 <p>Populations are dynamic entities. Their size and composition fluctuate in response to numerous factors, including seasonal and yearly changes in the environment, natural disasters such as forest fires and volcanic eruptions, and competition for resources between and within species.</p>
@@ -39,26 +39,26 @@ def fetch_and_parse_openstax_content(url: str):
         </div>
         </body></html>
         """
-    
+
     print("Parsing HTML content...")
     soup = BeautifulSoup(html_content, "html.parser")
-    
+
     # --- Text Extraction Logic ---
     # OpenStax content is often within <div class="main-content"> or similar.
     # Specific sections might be in <div class="section"> or <section> tags.
     # Paragraphs are in <p>, headings in <h1>, <h2>, <h3> etc.
-    
+
     # Try to find a main content container. This class name might need adjustment
     # based on actual OpenStax structure if it changes.
     # For the chosen URL (and the fallback HTML), the content seems to be identifiable
     # by sections within a main area. Let's look for 'div' elements with class 'section'.
     # A more robust selector might be needed for the full site.
-    
+
     # Based on inspection of the live site for the chosen URL, content is often within
     # <div id="main-content"> and then sections have specific classes or data attributes.
     # For this example, let's assume sections of interest are divs with class 'section'
     # or a specific data-content-id attribute if available.
-    
+
     # For the fallback HTML and typical OpenStax structure:
     main_content_area = soup.find('div', id='main-content') # Or a more specific class for content
     if not main_content_area:
@@ -82,20 +82,20 @@ def fetch_and_parse_openstax_content(url: str):
     for section_idx, section_div in enumerate(sections):
         section_count += 1
         current_topic = f"Ecology Section {section_idx + 1}" # Default topic
-        
+
         # Try to get a more specific topic from a heading within the section
         first_heading = section_div.find(['h1', 'h2', 'h3', 'h4'])
         if first_heading and first_heading.get_text(strip=True):
             current_topic = first_heading.get_text(strip=True)
-        
+
         paragraphs = section_div.find_all('p', recursive=True)
-        
+
         for p_idx, p_tag in enumerate(paragraphs):
             raw_text = p_tag.get_text(separator=' ', strip=True)
-            
+
             # Basic cleaning: replace multiple whitespaces/newlines with a single space
             cleaned_text = re.sub(r'\s+', ' ', raw_text).strip()
-            
+
             if cleaned_text: # Only add if there's content
                 paragraph_count_total += 1
                 segment_data = {
@@ -143,9 +143,9 @@ def fetch_and_parse_openstax_content(url: str):
 
 if __name__ == "__main__":
     print("--- Starting OpenStax Ecology Content Extraction ---")
-    
+
     segments = fetch_and_parse_openstax_content(TARGET_URL)
-    
+
     if segments:
         try:
             with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
@@ -158,5 +158,5 @@ if __name__ == "__main__":
             print(f"An unexpected error occurred during saving: {e}")
     else:
         print("No text segments were extracted. Output file not created.")
-        
+
     print("\n--- OpenStax Ecology Content Extraction Finished ---")

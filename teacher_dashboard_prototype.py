@@ -45,7 +45,7 @@ def get_session_summaries(statements: List[Dict[str, Any]]) -> List[Dict[str, An
     for i, stmt in enumerate(statements):
         # Robust session_id extraction
         session_id = stmt.get("context", {}).get("extensions", {}).get("http://example.com/xapi/extensions/session_id", f"unknown_session_stmt{i}")
-        
+
         # Robust student_id extraction
         student_id = stmt.get("actor", {}).get("account", {}).get("name", "Unknown Student")
 
@@ -59,7 +59,7 @@ def get_session_summaries(statements: List[Dict[str, Any]]) -> List[Dict[str, An
                 "flagged_input_count": 0,
                 "flagged_output_count": 0
             }
-        
+
         sessions[session_id]["turn_count"] += 1
         if stmt.get("timestamp") and (sessions[session_id]["start_timestamp"] == "N/A" or sessions[session_id]["start_timestamp"] > stmt.get("timestamp")):
              sessions[session_id]["start_timestamp"] = stmt.get("timestamp")
@@ -67,23 +67,23 @@ def get_session_summaries(statements: List[Dict[str, Any]]) -> List[Dict[str, An
         if sessions[session_id]["first_user_utterance"] == "N/A" and \
            stmt.get("object", {}).get("definition", {}).get("extensions", {}).get("http://example.com/xapi/extensions/user_utterance_raw"):
             sessions[session_id]["first_user_utterance"] = stmt["object"]["definition"]["extensions"]["http://example.com/xapi/extensions/user_utterance_raw"]
-        
+
         # Count moderation flags
         input_mod = stmt.get("result", {}).get("extensions", {}).get("http://example.com/xapi/extensions/input_moderation_details", {})
         if isinstance(input_mod, dict) and input_mod.get("is_safe") is False:
             sessions[session_id]["flagged_input_count"] += 1
-            
+
         output_mod = stmt.get("result", {}).get("extensions", {}).get("http://example.com/xapi/extensions/output_moderation_details", {})
         if isinstance(output_mod, dict) and output_mod.get("is_safe") is False:
             sessions[session_id]["flagged_output_count"] += 1
-            
+
     sorted_sessions = sorted(sessions.values(), key=lambda s: s.get("start_timestamp", ""), reverse=True)
     return sorted_sessions
 
 
 def get_dialogue_turns_for_session(statements: List[Dict[str, Any]], session_id: str) -> List[Dict[str, Any]]:
     session_statements = [s for s in statements if s.get("context", {}).get("extensions", {}).get("http://example.com/xapi/extensions/session_id") == session_id]
-    
+
     dialogue_turns = []
     for stmt in session_statements:
         # Robust extraction for moderation details
@@ -92,10 +92,10 @@ def get_dialogue_turns_for_session(statements: List[Dict[str, Any]], session_id:
         output_moderation = result_extensions.get("http://example.com/xapi/extensions/output_moderation_details")
 
         object_definition_extensions = stmt.get("object",{}).get("definition",{}).get("extensions",{})
-        
+
         turn_data: Dict[str, Any] = {
             "timestamp": stmt.get("timestamp", "N/A"),
-            "speaker": "Unknown", 
+            "speaker": "Unknown",
             "utterance": "N/A",
             "input_moderation": input_moderation if isinstance(input_moderation, dict) else None,
             "output_moderation": output_moderation if isinstance(output_moderation, dict) else None,
@@ -105,19 +105,19 @@ def get_dialogue_turns_for_session(statements: List[Dict[str, Any]], session_id:
             "active_lo": stmt.get("context", {}).get("extensions", {}).get("http://example.com/xapi/extensions/learning_objective_active", "N/A"),
             "content_item_id": stmt.get("context", {}).get("contextActivities", {}).get("parent", [{}])[0].get("id", "N/A")
         }
-        
+
         user_utterance = object_definition_extensions.get("http://example.com/xapi/extensions/user_utterance_raw")
         aita_response = stmt.get("result", {}).get("response")
 
         if user_utterance:
             turn_data["speaker"] = "user"
             turn_data["utterance"] = user_utterance
-        elif aita_response: 
+        elif aita_response:
             turn_data["speaker"] = "assistant"
             turn_data["utterance"] = aita_response
-        
+
         dialogue_turns.append(turn_data)
-        
+
     dialogue_turns.sort(key=lambda t: t.get("timestamp", ""))
     return dialogue_turns
 
@@ -140,13 +140,13 @@ def render_dashboard():
 
     # Sidebar for Session Selection & Filters
     st.sidebar.header("Filters & Navigation")
-    
+
     # Filters for Overview Page
     filter_student_id = st.sidebar.text_input("Filter by Student ID (exact match):").strip()
-    
+
     # Ensure date_input uses datetime.date or None
     filter_date_val: Optional[datetime.date] = st.sidebar.date_input(
-        "Filter by Date (shows sessions from this date):", 
+        "Filter by Date (shows sessions from this date):",
         value=None, # No default date selected
         key="filter_date_picker"
     )
@@ -181,7 +181,7 @@ def render_dashboard():
     selected_formatted_option = st.sidebar.selectbox(
         "Select a Session (or Overview):",
         options=session_options_display,
-        index=0 
+        index=0
     )
     selected_session_id = option_to_id_map[selected_formatted_option]
 
@@ -189,7 +189,7 @@ def render_dashboard():
     # Main Area Display
     if selected_session_id == "Overview":
         st.header("Recent Session Overview")
-        
+
         # Aggregate Stats
         st.subheader("Overall Statistics (Filtered)")
         col1, col2 = st.columns(2)
@@ -214,16 +214,16 @@ def render_dashboard():
 
     else: # Session Detail View
         dialogue_turns = get_dialogue_turns_for_session(statements, selected_session_id) # Use original statements for lookup
-        
+
         # Extract session-level context for display
         current_session_info = next((s for s in session_summaries_all if s["session_id"] == selected_session_id), None)
         student_id_display = current_session_info["student_id"] if current_session_info else "N/A"
-        
+
         # Extract AITA persona, LO, Content ID from the first relevant turn (usually an AITA turn)
         aita_persona_display = "N/A"
         active_lo_display = "N/A"
         content_item_id_display = "N/A"
-        
+
         first_aita_turn_data = next((turn for turn in dialogue_turns if turn["speaker"] == "assistant" and turn.get("aita_persona")), None)
         if not first_aita_turn_data: # Fallback to any turn if no assistant turn with info
             first_aita_turn_data = dialogue_turns[0] if dialogue_turns else None
@@ -235,9 +235,9 @@ def render_dashboard():
 
         st.header(f"Dialogue Transcript: Session {selected_session_id}")
         st.markdown(f"""
-        **Student ID:** `{student_id_display}`  
-        **AITA Persona:** `{aita_persona_display}`  
-        **Active Learning Objective:** `{active_lo_display}`  
+        **Student ID:** `{student_id_display}`
+        **AITA Persona:** `{aita_persona_display}`
+        **Active Learning Objective:** `{active_lo_display}`
         **Content Item ID:** `{content_item_id_display}`
         """)
         st.divider()
@@ -257,7 +257,7 @@ def render_dashboard():
                         st.error(f"⚠️ Input flagged by safeguard! Categories: {turn['input_moderation']['flagged_categories']}")
                     with st.expander("Input Moderation Details", expanded=False):
                         st.json(turn["input_moderation"])
-                
+
                 if turn["output_moderation"] and role == "assistant":
                     if not turn["output_moderation"]["is_safe"]:
                         st.warning(f"⚠️ AITA output was moderated/replaced! Original flagged categories: {turn['output_moderation']['flagged_categories']}")
@@ -265,7 +265,7 @@ def render_dashboard():
                         st.json(turn["output_moderation"])
                         if turn["raw_llm_response"] and turn["raw_llm_response"] != turn["utterance"]:
                             st.text_area("Original LLM Response (before safeguard override):", value=turn["raw_llm_response"], height=100, disabled=True)
-                
+
                 if role == "assistant" and turn["full_llm_prompt"]:
                     with st.expander("Full Prompt to LLM (for this AITA turn)", expanded=False):
                         st.text_area("Prompt:", value=turn["full_llm_prompt"], height=150, disabled=True)

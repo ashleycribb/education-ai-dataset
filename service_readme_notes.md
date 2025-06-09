@@ -93,8 +93,8 @@ curl -X POST "http://localhost:8000/users/register" \
     curl -X POST "http://localhost:8000/interact" \
          -H "Content-Type: application/json" \
          -d '{
-               "user_id": "generated_uuid_for_ada", 
-               "aita_persona_id": "EcoExplorerAITA_7thGrade_Pilot1", 
+               "user_id": "generated_uuid_for_ada",
+               "aita_persona_id": "EcoExplorerAITA_7thGrade_Pilot1",
                "user_utterance": "What is a food web?",
                "conversation_history": [],
                "subject": "Ecology",
@@ -117,7 +117,7 @@ curl -X POST "http://localhost:8000/users/register" \
     "model_used": "microsoft/Phi-3-mini-4k-instruct", // Or path to adapter if loaded
     "aita_persona_resolved": "EcoExplorerAITA_7thGrade_Pilot1",
     "user_profile_found": true,
-    "lms_context_found": true 
+    "lms_context_found": true
   }
 }
 ```

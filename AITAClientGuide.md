@@ -119,8 +119,8 @@ The `aita_mcp_client.py` can be used to interact with different AITAs (e.g., Rea
     *   Adjust `DEFAULT_STUDENT_ID`, `DEFAULT_SUBJECT`, and `DEFAULT_ITEM_ID` at the top of the script. These should correspond to a relevant context for the target AITA that exists in your `lms_mcp_server_mock.py`'s `MOCK_DB`.
     *   For example, for an "Eco Explorer AITA", you might set:
         ```python
-        DEFAULT_SUBJECT = "Ecology" 
-        DEFAULT_ITEM_ID = "eco_passage_foodweb_001" 
+        DEFAULT_SUBJECT = "Ecology"
+        DEFAULT_ITEM_ID = "eco_passage_foodweb_001"
         ```
 
 3.  **System Prompt Adaptation**:

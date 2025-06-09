@@ -63,7 +63,8 @@ Each object in the `dialogue_turns` list represents one utterance and its associ
 *   `utterance_modality`: (String) Typically "text" for current SLMs.
 *   `utterance`: (String) The text spoken by the speaker.
 *   `confidence_score_aita`: (Float, Optional, for AITA turns) The AITA's confidence in its response (0.0-1.0).
-*   `pedagogical_notes`: (String, for AITA turns) **Crucial field** explaining the teaching strategy, intent, or reasoning behind the AITA's utterance. This supports the "teach how to learn" philosophy by making the AITA's pedagogy explicit.
+*   `pedagogical_notes`: (List of Strings, for AITA turns) **Crucial field**. A list of notes, each explaining a specific teaching strategy, intent, or reasoning behind the AITA's utterance in that turn. Supports the "teach how to learn" philosophy by making the AITA's pedagogy explicit and allowing for multiple facets of a strategy to be documented for a single turn.
+*   `aita_turn_narrative_rationale`: (String, for AITA turns, Optional) A concise (1-2 sentence) human-readable summary of the AITA's primary pedagogical intent or strategy for this specific turn. Useful for quick review in teacher dashboards and for potentially informing student-facing explanations of AITA reasoning.
 *   `safeguard_tags`: (List of Strings, Conceptual) Tags indicating safety checks passed (e.g., "safe", "on-topic", "age\_appropriate\_language").
 *   `xapi_verb_id`: (String, Conceptual) A URI for an xAPI verb representing the primary action of the turn (e.g., "http://adlnet.gov/expapi/verbs/asked", "http://adlnet.gov/expapi/verbs/responded").
 *   `xapi_object_id`: (String, Conceptual) A unique URI for the object of the xAPI statement related to this turn.

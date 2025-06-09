@@ -1,8 +1,8 @@
 """
 K-12 Model Context Protocol (MCP) Client SDK
 ---------------------------------------------
-This SDK provides a simplified client for interacting with MCP servers 
-(both StdIO and HTTP) and utilities for creating xAPI-like statements 
+This SDK provides a simplified client for interacting with MCP servers
+(both StdIO and HTTP) and utilities for creating xAPI-like statements
 for logging interactions.
 """
 

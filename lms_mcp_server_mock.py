@@ -112,7 +112,7 @@ if __name__ == "__main__":
 
     # Instantiate handlers
     student_activity_handler = StudentActivityContextResourceHandler()
-    
+
     # Register handlers with the server
     # The path pattern uses named segments that will be passed in path_params
     handlers = {
@@ -126,7 +126,7 @@ if __name__ == "__main__":
     for key in MOCK_DB.get("student_activity_contexts", {}).keys():
         print(f"  - {key}")
     print("Server is now listening for MCP requests via stdio...")
-    
+
     server.run()
 
     print("--- Mock LMS-MCP Server Stopped ---")

@@ -16,8 +16,8 @@ if "session_id" not in st.session_state: # This will be updated by the backend
     st.session_state.session_id: Optional[str] = None
 if "available_aita_personas" not in st.session_state:
     st.session_state.available_aita_personas: List[str] = [
-        "default_phi3_base", 
-        "ReadingExplorerAITA_4thGrade_Pilot1", 
+        "default_phi3_base",
+        "ReadingExplorerAITA_4thGrade_Pilot1",
         "EcoExplorerAITA_7thGrade_Pilot1"
     ]
 if "current_aita_persona_id" not in st.session_state:
@@ -33,22 +33,22 @@ def run_student_frontend_v2():
     # --- Sidebar for User and AITA Persona Setup ---
     st.sidebar.header("User & AITA Setup")
     input_user_id = st.sidebar.text_input(
-        "Enter your User ID:", 
+        "Enter your User ID:",
         value=st.session_state.user_id
     )
-    
+
     # Create a mapping from persona_id to a more friendly display name if desired
     persona_display_names = {
         "default_phi3_base": "Default Assistant (Phi-3 Base)",
         "ReadingExplorerAITA_4thGrade_Pilot1": "Reading Explorer (4th Grade)",
         "EcoExplorerAITA_7thGrade_Pilot1": "Eco Explorer (7th Grade)"
     }
-    
+
     # Get the display name for the current persona, or default to the ID itself
     current_persona_display = persona_display_names.get(st.session_state.current_aita_persona_id, st.session_state.current_aita_persona_id)
 
     selected_persona_display_name = st.sidebar.selectbox(
-        "Choose AITA Persona:", 
+        "Choose AITA Persona:",
         options=[persona_display_names.get(pid, pid) for pid in st.session_state.available_aita_personas],
         index=[persona_display_names.get(pid, pid) for pid in st.session_state.available_aita_personas].index(current_persona_display) # Set current selection
     )
@@ -61,7 +61,7 @@ def run_student_frontend_v2():
                 st.session_state.current_aita_persona_id = pid
                 break
         st.session_state.current_aita_display_name = selected_persona_display_name
-        
+
         # Reset chat for the new user/persona
         st.session_state.messages = []
         st.session_state.session_id = None # Reset session_id, backend will create new one
@@ -81,7 +81,7 @@ def run_student_frontend_v2():
         st.warning("Please enter a User ID in the sidebar to start chatting.")
     elif prompt := st.chat_input("What would you like to discuss or ask?"):
         st.session_state.messages.append({"role": "user", "content": prompt})
-        
+
         # Display user's message immediately
         with st.chat_message("user"):
             st.markdown(prompt)
@@ -90,7 +90,7 @@ def run_student_frontend_v2():
         # Exclude system messages and only take recent history for the payload
         # The backend will prepend its own system prompt based on persona and context
         history_for_payload = [
-            {"role": msg["role"], "content": msg["content"]} 
+            {"role": msg["role"], "content": msg["content"]}
             for msg in st.session_state.messages[:-1] # Exclude the current user message already added
             if msg["role"] != "system" # Exclude any client-side system messages if they were used
         ][- (MAX_HISTORY_TURNS * 2):] # Keep last N turns (user + assistant pairs)
@@ -105,18 +105,18 @@ def run_student_frontend_v2():
             # "subject": "ReadingComprehension", # Example
             # "current_item_id": "passage_kitten_001" # Example
         }
-        
+
         # Display AITA "thinking" animation and call backend
         with st.chat_message("assistant"):
             with st.spinner("AITA is thinking..."):
                 try:
                     response = requests.post(f"{AITA_SERVICE_URL}/interact", json=payload, timeout=60) # Increased timeout
-                    response.raise_for_status() 
+                    response.raise_for_status()
                     response_data = response.json()
-                    
+
                     assistant_response = response_data.get("aita_response", "Sorry, I encountered an issue processing your request.")
                     st.session_state.session_id = response_data.get("session_id") # Update/set session_id from backend
-                
+
                 except requests.exceptions.Timeout:
                     assistant_response = "Error: The AITA service timed out. Please try again."
                     st.error(assistant_response)
@@ -137,7 +137,7 @@ def run_student_frontend_v2():
                 except Exception as e:
                     assistant_response = f"An unexpected error occurred: {e}"
                     st.error(assistant_response)
-            
+
             st.markdown(assistant_response) # Display AITA's response
 
         st.session_state.messages.append({"role": "assistant", "content": assistant_response})

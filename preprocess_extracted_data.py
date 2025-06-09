@@ -13,28 +13,28 @@ def clean_text(text: str) -> str:
 
     # Normalize whitespace: replace multiple spaces/tabs/newlines with a single space
     cleaned_text = re.sub(r'\s+', ' ', text)
-    
+
     # Strip leading/trailing whitespace from the whole text
     cleaned_text = cleaned_text.strip()
-    
+
     # --- Conceptual Examples for More Advanced Cleaning (commented out) ---
     # Remove Project Gutenberg headers/footers (markers vary greatly)
     # cleaned_text = re.sub(r'\*\*\* START OF THIS PROJECT GUTENBERG EBOOK.*? \*\*\*', '', cleaned_text, flags=re.IGNORECASE | re.DOTALL)
     # cleaned_text = re.sub(r'\*\*\* END OF THIS PROJECT GUTENBERG EBOOK.*? \*\*\*', '', cleaned_text, flags=re.IGNORECASE | re.DOTALL)
-    
+
     # Remove common artifacts like "[Illustration]" or "[Image:...]"
     # cleaned_text = re.sub(r'\[Illustration:.*?\]', '', cleaned_text, flags=re.IGNORECASE)
     # cleaned_text = re.sub(r'\[Image:.*?\]', '', cleaned_text, flags=re.IGNORECASE)
-    
+
     # Remove "Click here for more" type phrases
     # cleaned_text = re.sub(r'Click here for more information', '', cleaned_text, flags=re.IGNORECASE)
-    
+
     # Correct common OCR errors (example: 'rn' to 'm') - highly dependent on source
     # cleaned_text = re.sub(r'rn', 'm', cleaned_text)
-    
+
     # Remove extra page numbers or chapter markers if they are simple patterns
     # cleaned_text = re.sub(r'\bPage \d+\b', '', cleaned_text)
-    
+
     return cleaned_text
 
 # 2. Filtering Functions
@@ -44,8 +44,8 @@ def filter_by_length(item: Dict[str, Any], min_words: Optional[int] = None, max_
     """
     text_to_check = item.get('raw_text', "")
     if not isinstance(text_to_check, str): # Ensure text is string
-        return False 
-        
+        return False
+
     word_count = len(text_to_check.split())
     item['word_count'] = word_count # Update word count in the item
 
@@ -62,18 +62,18 @@ def filter_by_keywords(item: Dict[str, Any], keywords: Optional[List[str]] = Non
     """
     if not keywords: # No keywords to filter by, so pass the item
         return True
-        
+
     text_to_check = item.get('raw_text', "")
     if not isinstance(text_to_check, str):
         return False # Or handle as appropriate if text is not string
 
     search_text = text_to_check if case_sensitive else text_to_check.lower()
-    
+
     for keyword in keywords:
         search_keyword = keyword if case_sensitive else keyword.lower()
         if search_keyword in search_text:
             return True # Found at least one keyword
-            
+
     return False # No keywords found
 
 def filter_by_grade_level(item: Dict[str, Any], target_grade_str: Optional[str] = None) -> bool:
@@ -83,10 +83,10 @@ def filter_by_grade_level(item: Dict[str, Any], target_grade_str: Optional[str] 
     """
     if not target_grade_str: # No grade level filter specified, so pass the item
         return True
-        
+
     grade_level_in_item = item.get('potential_grade_level', "")
     if not isinstance(grade_level_in_item, str): # Ensure it's a string
-        return False 
+        return False
 
     return target_grade_str.lower() in grade_level_in_item.lower()
 
@@ -96,7 +96,7 @@ def preprocess_data(raw_data_list: List[Dict[str, Any]], filter_criteria: Dict[s
     Cleans and filters a list of raw data items based on specified criteria.
     """
     processed_items = []
-    
+
     min_words = filter_criteria.get("min_words")
     max_words = filter_criteria.get("max_words")
     keywords_any = filter_criteria.get("keywords_any") # Expects a list of keywords
@@ -110,21 +110,21 @@ def preprocess_data(raw_data_list: List[Dict[str, Any]], filter_criteria: Dict[s
 
         # Clean text
         item['raw_text'] = clean_text(item['raw_text'])
-        
+
         # Apply filters
         if not filter_by_length(item, min_words, max_words):
-            continue 
+            continue
             # item['word_count'] is updated by filter_by_length
-            
+
         if not filter_by_keywords(item, keywords_any, keywords_case_sensitive):
             continue
-            
+
         if not filter_by_grade_level(item, grade_level_filter):
             continue
-            
+
         # If all filters pass (or are not specified), add to processed list
         processed_items.append(item)
-        
+
     return processed_items
 
 # 4. Main Execution Block
@@ -165,7 +165,7 @@ if __name__ == "__main__":
     # --- Process Gutenberg Data ---
     gutenberg_raw_file = "gutenberg_reading_passages_raw.json"
     gutenberg_processed_file = "gutenberg_reading_passages_processed.json"
-    
+
     gutenberg_data = load_json_data(gutenberg_raw_file)
     if not gutenberg_data: # If file not found or empty, use dummy data
         print(f"Using dummy data for Gutenberg as '{gutenberg_raw_file}' was not found or empty.")
@@ -178,11 +178,11 @@ if __name__ == "__main__":
     filter_criteria_reading_gr4 = {
         "min_words": 10, # Adjusted to include dummy_story1 and dummy_story2
         "max_words": 200,
-        "keywords_any": ["forest", "cheese", "adventure", "hop", "rabbit", "mouse"], 
+        "keywords_any": ["forest", "cheese", "adventure", "hop", "rabbit", "mouse"],
         "grade_level": "3-5" # This will match "3-5" and "2-4" (as "3-5" contains "3", "4", "5")
                                # A more precise grade filter might be needed for real scenarios
     }
-    
+
     print(f"\nProcessing Gutenberg data (initial count: {len(gutenberg_data)})...")
     processed_gutenberg_data = preprocess_data(list(gutenberg_data), filter_criteria_reading_gr4) # Pass a copy
     save_json_data(processed_gutenberg_data, gutenberg_processed_file)
@@ -209,12 +209,12 @@ if __name__ == "__main__":
         "min_words": 10,
         "max_words": 1000,
         "keywords_any": ["population", "ecosystem", "density", "producer", "sunlight"],
-        "grade_level": "7-9" 
+        "grade_level": "7-9"
     }
 
     print(f"\nProcessing OpenStax Ecology data (initial count: {len(openstax_data)})...")
     processed_openstax_data = preprocess_data(list(openstax_data), filter_criteria_ecology_gr7) # Pass a copy
     save_json_data(processed_openstax_data, openstax_processed_file)
     print(f"OpenStax data: {len(openstax_data)} items before -> {len(processed_openstax_data)} items after processing.")
-    
+
     print("\n--- Data Preprocessing Finished ---")

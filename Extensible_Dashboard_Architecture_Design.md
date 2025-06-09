@@ -44,20 +44,20 @@ The V2 prototype will leverage Streamlit's native multi-page application functio
 
         st.set_page_config(page_title="AITA Teacher Dashboard V2", layout="wide")
         st.title("AITA Teacher Dashboard V2")
-        
+
         # Initialize and load data (cached)
         # The data manager instance could be stored in st.session_state if complex state is needed across pages,
         # or simply instantiated and its methods called by each page if data loading is cached globally by Streamlit.
         # For simplicity here, assume data_manager methods are called directly by pages after initial load.
-        
+
         # @st.cache_data # Caching would be within the data_manager
         # def load_data():
         #     data_manager = DashboardDataManager()
         #     return data_manager.load_xapi_statements() # Or a more comprehensive load function
-        
+
         # all_statements = load_data()
         # st.sidebar.success("Data loaded successfully!")
-        
+
         st.markdown("Welcome to the AITA Teacher Dashboard. Please select a view from the sidebar.")
         # Streamlit handles page navigation from here based on files in pages/
         ```
@@ -111,7 +111,7 @@ The V2 prototype will leverage Streamlit's native multi-page application functio
             # For V2 prototype, this would return mock/placeholder data.
             print(f"Placeholder: Analyzing strategy effectiveness with filters: {filters}")
             return {"strategy_X_usage": 50, "strategy_Y_correlation_positive": True, "notes": "Mock data"}
-            
+
         # @st.cache_data
         def get_student_progress_summary(_all_statements: List[Dict[str, Any]], student_id: str, lo_filters: Optional[List[str]] = None) -> List[Dict[str, Any]]:
             # Conceptual: Tracks a student's interactions across sessions for specific LOs.

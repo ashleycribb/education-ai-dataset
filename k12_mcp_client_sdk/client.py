@@ -11,10 +11,10 @@ class SimplifiedMCPClient:
     A simplified client for interacting with MCP servers (StdIO or HTTP).
     """
     def __init__(
-        self, 
-        client_type: str = "stdio", 
-        host: Optional[str] = "localhost", 
-        port: Optional[int] = 8080, 
+        self,
+        client_type: str = "stdio",
+        host: Optional[str] = "localhost",
+        port: Optional[int] = 8080,
         logger: Optional[Any] = None
     ):
         self.client_type = client_type.lower()
@@ -29,7 +29,7 @@ class SimplifiedMCPClient:
             self.mcp_client = MCPHTTPClient(host=host, port=port)
         else:
             raise ValueError(f"Unsupported client_type: {client_type}. Choose 'stdio' or 'http'.")
-        
+
         if self.logger:
             self.logger.info(f"SimplifiedMCPClient initialized (type: {self.client_type}).")
 
@@ -82,7 +82,7 @@ class SimplifiedMCPClient:
             return None
 
         resource_path = ResourcePath(path=path, query_params=query_params or {})
-        
+
         try:
             if self.logger:
                 self.logger.info(f"Requesting resource: {path} with params {query_params}")
@@ -128,7 +128,7 @@ class SimplifiedMCPClient:
             return None
 
         tool_invocation = ToolInvocation(tool_name=tool_name, inputs=inputs)
-        
+
         try:
             if self.logger:
                 self.logger.info(f"Invoking tool: {tool_name} with inputs: {inputs}")
@@ -139,7 +139,7 @@ class SimplifiedMCPClient:
                 self.mcp_client.send_invocation(tool_invocation)
                 # StdIO client's receive_response might block. Timeout is conceptual here.
                 # A more complex implementation might use asyncio with timeout.
-                response_message = self.mcp_client.receive_response() 
+                response_message = self.mcp_client.receive_response()
                 if response_message:
                     if response_message.stream_type == StreamMessageType.TOOL_RESULT:
                         tool_result = ToolResult.from_json(response_message.payload)
@@ -169,7 +169,7 @@ class SimplifiedMCPClient:
                     if self.logger:
                         self.logger.error(f"Tool '{tool_name}' invocation resulted in an error: {error_details.get('message', 'Unknown tool error')}")
                     return None # Error reported by the tool itself
-                
+
                 if self.logger:
                     self.logger.info(f"Tool '{tool_name}' invoked successfully. Outputs: {tool_result.outputs}")
                 return tool_result.outputs

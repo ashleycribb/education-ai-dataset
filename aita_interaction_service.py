@@ -29,7 +29,7 @@ except ImportError:
     print("WARNING: moderation_service.py not found. Moderation will be disabled.")
     class ModerationService: # Dummy service
         def __init__(self, logger=None): self.logger = logger; print("INFO: Using DUMMY ModerationService.")
-        def check_text(self, text:str) -> Dict[str, Any]: 
+        def check_text(self, text:str) -> Dict[str, Any]:
             return {"is_safe": True, "flagged_categories": [], "scores": {}, "model_used": "dummy_moderation_disabled"}
 
 # --- 1. Pydantic Models (from previous version, largely unchanged) ---
@@ -44,13 +44,13 @@ class UserProfile(UserProfileCreate):
 
 class InteractionRequest(BaseModel):
     session_id: Optional[str] = None
-    user_id: str 
-    aita_persona_id: str = "default_phi3_base" 
+    user_id: str
+    aita_persona_id: str = "default_phi3_base"
     user_utterance: str
     conversation_history: List[Dict[str, str]] = []
     # Optional fields for richer context if client sends them directly
     # (Alternative to fetching from a separate MCP context server for simple cases)
-    subject: Optional[str] = None 
+    subject: Optional[str] = None
     current_item_id: Optional[str] = None
     current_item_title: Optional[str] = None
     current_item_text_snippet: Optional[str] = None
@@ -109,7 +109,7 @@ def get_model_and_tokenizer_for_persona(persona_id: str, base_model_id: str) -> 
     print(f"INFO: Attempting to load model for persona: {persona_id} (base: {base_model_id})")
     try:
         current_device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        
+
         local_tokenizer = AutoTokenizer.from_pretrained(base_model_id, trust_remote_code=True)
         if local_tokenizer.pad_token is None:
             local_tokenizer.pad_token = local_tokenizer.eos_token
@@ -117,7 +117,7 @@ def get_model_and_tokenizer_for_persona(persona_id: str, base_model_id: str) -> 
         local_model = AutoModelForCausalLM.from_pretrained(
             base_model_id, torch_dtype="auto", trust_remote_code=True
         )
-        
+
         adapter_path = ADAPTER_CONFIG.get(persona_id)
         if adapter_path and os.path.exists(adapter_path): # Check if path exists
             print(f"INFO: Found adapter for '{persona_id}' at '{adapter_path}'. Loading...")
@@ -133,7 +133,7 @@ def get_model_and_tokenizer_for_persona(persona_id: str, base_model_id: str) -> 
 
         local_model.to(current_device)
         local_model.eval()
-        
+
         LOADED_MODELS_CACHE[persona_id] = {"model": local_model, "tokenizer": local_tokenizer, "device": current_device}
         print(f"INFO: Model & tokenizer for persona '{persona_id}' loaded and cached.")
         return local_model, local_tokenizer, current_device
@@ -153,7 +153,7 @@ async def startup_event():
         class DummyModService:
             def check_text(self, text:str): return {"is_safe": True, "flagged_categories": [], "scores": {}, "model_used": "dummy_moderation_startup_failed"}
         moderation_service = DummyModService()
-    
+
     # Pre-load default base model
     print("INFO: Service Startup: Pre-loading default base model...")
     get_model_and_tokenizer_for_persona("default_phi3_base", BASE_MODEL_ID)
@@ -210,14 +210,14 @@ async def interact_with_aita(request: InteractionRequest):
     if user_profile and user_profile.preferred_aita_persona_id:
         effective_aita_persona_id = user_profile.preferred_aita_persona_id
         print(f"INFO: Using user's preferred AITA: {effective_aita_persona_id}")
-    
+
     current_model, current_tokenizer, current_device = get_model_and_tokenizer_for_persona(effective_aita_persona_id, BASE_MODEL_ID)
     if not current_model or not current_tokenizer or not current_device:
         raise HTTPException(status_code=503, detail=f"Model resources for persona '{effective_aita_persona_id}' are not available.")
 
     # Fetch simulated LMS context
     lms_context = get_simulated_lms_context(request.user_id, request.subject, request.current_item_id)
-    
+
     # Prepare context for system prompt and logging (more robust extraction)
     grade_level_info = f" The student is in grade {user_profile.grade_level}." if user_profile and user_profile.grade_level else ""
     passage_title = lms_context.get("current_passage_title", lms_context.get("current_item_title", "the current topic")) if lms_context else "the current topic"
@@ -257,7 +257,7 @@ async def interact_with_aita(request: InteractionRequest):
         prompt_text = current_tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
         inputs = current_tokenizer(prompt_text, return_tensors="pt", add_special_tokens=True).to(current_device)
         input_ids_length = inputs.input_ids.shape[1]
-        
+
         start_time = time.time()
         with torch.no_grad():
             generated_outputs = current_model.generate(
@@ -265,10 +265,10 @@ async def interact_with_aita(request: InteractionRequest):
                 pad_token_id=current_tokenizer.pad_token_id, do_sample=True, temperature=0.7, top_p=0.9
             )
         duration_s = time.time() - start_time
-        
+
         response_ids = generated_outputs[0][input_ids_length:]
         aita_raw_response = current_tokenizer.decode(response_ids, skip_special_tokens=True).strip()
-        
+
         # Output Moderation
         mod_output_results = moderation_service.check_text(aita_raw_response)
         aita_final_response = aita_raw_response
@@ -294,11 +294,11 @@ async def interact_with_aita(request: InteractionRequest):
             }
         }
         log_xapi_statement(create_interaction_xapi_statement(**xapi_log_data), XAPI_LOG_FILE_PATH)
-        
+
         return InteractionResponse(
             session_id=current_session_id, aita_response=aita_final_response,
-            debug_info={"model_used": current_model.name_or_path if hasattr(current_model, "name_or_path") else base_model_id, 
-                        "aita_persona_resolved": effective_aita_persona_id, 
+            debug_info={"model_used": current_model.name_or_path if hasattr(current_model, "name_or_path") else base_model_id,
+                        "aita_persona_resolved": effective_aita_persona_id,
                         "user_profile_found": bool(user_profile),
                         "lms_context_found": bool(lms_context)}
         )

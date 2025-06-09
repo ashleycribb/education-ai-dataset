@@ -27,7 +27,7 @@ RUN pip install --no-cache-dir \
 # 5. Copy Application Code
 # Assuming all necessary Python files are in the root of the build context
 COPY aita_interaction_service.py .
-COPY moderation_service.py . 
+COPY moderation_service.py .
 # If xapi_utils is a separate file and not part of an installed SDK:
 # COPY k12_mcp_client_sdk/xapi_utils.py k12_mcp_client_sdk/ # Create dir and copy
 # For simplicity, if xapi_utils.py is needed, ensure it's in the root or adjust path.

@@ -14,7 +14,7 @@ class ModerationService:
         try:
             if self.logger:
                 self.logger.info(f"ModerationService: Initializing text classification pipeline with model '{self.model_name}'.")
-            
+
             # Some models, especially multi-label ones, might require explicit tokenizer and model loading
             # if the default pipeline("text-classification", model=model_name) doesn't handle them well.
             # For "unitary/toxic-bert", the standard pipeline should work.
@@ -47,7 +47,7 @@ class ModerationService:
         is_safe = True
         flagged_categories: List[str] = []
         all_scores_dict: Dict[str, float] = {}
-        
+
         # Model name to be returned in results, ensuring it reflects the actual model used by the pipeline
         # For pipelines initialized with a model object, pipeline.model.name_or_path might be more accurate.
         # If initialized with model name string, self.model_name is fine.
@@ -70,7 +70,7 @@ class ModerationService:
 
             if self.logger:
                 self.logger.info(f"ModerationService: Checking text: '{text[:100]}...'") # Log snippet
-            
+
             pipeline_output = self.pipeline(text)
             # The output of pipeline with return_all_scores=True is usually a list of lists of dicts,
             # e.g., [[{'label': 'toxic', 'score': 0.9}, {'label': 'severe_toxic', 'score': 0.1}, ...]]
@@ -94,7 +94,7 @@ class ModerationService:
                         # For this example, we'll flag any category that meets the threshold.
                         is_safe = False
                         flagged_categories.append(label)
-                
+
                 if self.logger:
                     self.logger.info(f"ModerationService: Scores for '{text[:50]}...': {all_scores_dict}, Is Safe: {is_safe}")
 
@@ -102,7 +102,7 @@ class ModerationService:
                 if self.logger:
                     self.logger.error(f"ModerationService: Unexpected pipeline output format: {pipeline_output}")
                 # Fallback to considering it unsafe if output format is not as expected
-                is_safe = False 
+                is_safe = False
                 all_scores_dict = {"error": "unexpected_pipeline_output_format"}
 
 
@@ -117,7 +117,7 @@ class ModerationService:
             "is_safe": is_safe,
             "flagged_categories": flagged_categories,
             "scores": all_scores_dict,
-            "model_used": model_identifier 
+            "model_used": model_identifier
         }
 
 if __name__ == '__main__':
@@ -129,12 +129,12 @@ if __name__ == '__main__':
 
     logger = SimpleLogger()
     logger.info("--- ModerationService Test ---")
-    
+
     # This will download the model if not cached, might take time.
     # If running in an environment without internet, this needs pre-downloaded model.
     try:
         moderation_service = ModerationService(logger=logger)
-        
+
         test_texts = [
             "I love this beautiful sunny day!",
             "This is a piece of junk and I hate it.", # Example that might trigger toxicity
@@ -150,7 +150,7 @@ if __name__ == '__main__':
             logger.info(f"  Scores: {results['scores']}")
             logger.info(f"  Model: {results['model_used']}")
             logger.info("-" * 20)
-            
+
     except Exception as e:
         logger.error(f"Could not run ModerationService test: {e}", exc_info=True)
         logger.error("This might be due to model download issues if run for the first time without internet,")

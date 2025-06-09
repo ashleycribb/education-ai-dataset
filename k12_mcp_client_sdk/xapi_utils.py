@@ -33,7 +33,7 @@ def create_interaction_xapi_statement(
             "name": actor_name, # User-friendly name
             "account": { # Account object for unique identification
                 "homePage": "http://example.com/k12_lms", # Placeholder homepage for the account provider
-                "name": actor_account_name 
+                "name": actor_account_name
             }
         },
         "verb": {
@@ -70,22 +70,22 @@ def create_interaction_xapi_statement(
     if session_id:
         if statement["context"]["extensions"] is None: statement["context"]["extensions"] = {}
         statement["context"]["extensions"]["http://example.com/xapi/extensions/session_id"] = session_id
-        
+
     if result_response is not None:
         statement["result"]["response"] = result_response
-        
+
     if result_duration_seconds is not None:
         # Format duration as ISO 8601 duration string
         statement["result"]["duration"] = f"PT{result_duration_seconds:.2f}S"
-        
+
     if result_extensions:
         if statement["result"].get("extensions") is None: statement["result"]["extensions"] = {}
         statement["result"]["extensions"].update(result_extensions)
-        
+
     if context_parent_activity_id:
         if statement["context"]["contextActivities"].get("parent") is None: statement["context"]["contextActivities"]["parent"] = []
         statement["context"]["contextActivities"]["parent"].append({"id": context_parent_activity_id})
-        
+
     if context_extensions:
         if statement["context"].get("extensions") is None: statement["context"]["extensions"] = {}
         statement["context"]["extensions"].update(context_extensions)
