@@ -70,6 +70,8 @@ Each object in the `dialogue_turns` list represents one utterance and its associ
 *   `xapi_object_id`: (String, Conceptual) A unique URI for the object of the xAPI statement related to this turn.
 *   `ontology_concept_tags`: (List of Strings, Conceptual) Tags linking the turn to concepts in the educational ontology (e.g., "main\_idea\_elicitation", "scaffolding\_question", "student\_identifies\_problem").
 
+The `pedagogical_notes` and `aita_turn_narrative_rationale` fields are key components supporting the **AITA Reasoner** feature, which aims to provide transparency into the AITA's pedagogical decision-making.
+
 This structured format is designed to:
 *   Provide rich context for fine-tuning the SLM.
 *   Explicitly encode pedagogical strategies in `pedagogical_notes`, aiding in training AITAs that "teach how to learn."
