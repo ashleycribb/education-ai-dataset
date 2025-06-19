@@ -22,24 +22,18 @@ RUN pip install --no-cache-dir \
     pydantic \
     sentencepiece \
     accelerate \
-    peft # Added PEFT for LoRA adapters
+    peft
 
 # 5. Copy Application Code
 # Assuming all necessary Python files are in the root of the build context
 COPY aita_interaction_service.py .
 COPY moderation_service.py .
-# If xapi_utils is a separate file and not part of an installed SDK:
-# COPY k12_mcp_client_sdk/xapi_utils.py k12_mcp_client_sdk/ # Create dir and copy
-# For simplicity, if xapi_utils.py is needed, ensure it's in the root or adjust path.
-# For this exercise, we assume xapi_utils might be part of k12_mcp_client_sdk
-# that would be installed via pip if it were a proper package.
-# If k12_mcp_client_sdk is local, it needs to be copied:
-# COPY k12_mcp_client_sdk/ k12_mcp_client_sdk/
+COPY model_loader_utils.py . # Added model_loader_utils.py
 
 # Ensure the k12_mcp_client_sdk is available for import
 # If it's a local directory SDK:
 COPY k12_mcp_client_sdk/ k12_mcp_client_sdk/
-# Add current directory to PYTHONPATH to allow imports from k12_mcp_client_sdk
+# Add current directory to PYTHONPATH to allow imports from k12_mcp_client_sdk and model_loader_utils from root
 ENV PYTHONPATH "${PYTHONPATH}:/app"
 
 

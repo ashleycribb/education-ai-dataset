@@ -4,7 +4,7 @@
 
 This document provides brief notes on building and running the `aita_interaction_service.py` using Docker, and how to test its endpoints.
 
-This service uses FastAPI to provide an API for interacting with a Small Language Model (SLM) to simulate an AI Tutor (AITA). It includes basic user profile management, content moderation, simulated LMS context, xAPI logging, and conceptual support for loading different AITA personas (fine-tuned models/adapters).
+This service uses FastAPI to provide an API for interacting with a Small Language Model (SLM) to simulate an AI Tutor (AITA). It includes basic user profile management, content moderation, simulated LMS context, xAPI logging, and conceptual support for loading different AITA personas (fine-tuned models/adapters). Model loading (including base model and PEFT adapters) is handled by a shared utility (`model_loader_utils.py`).
 
 ## Building the Docker Image
 
@@ -12,7 +12,8 @@ This service uses FastAPI to provide an API for interacting with a Small Languag
 2.  Make sure you have the following files and directories in your build context (e.g., the root of the project where you run `docker build`):
     *   `aita_interaction_service.py`
     *   `moderation_service.py`
-    *   `k12_mcp_client_sdk/` (directory containing at least `xapi_utils.py` and `__init__.py`)
+    *   `model_loader_utils.py` (The shared utility for loading models and adapters)
+    *   `k12_mcp_client_sdk/` (directory containing at least `xapi_utils.py` and `__init__.py`, as the service uses its logging utilities)
     *   `Dockerfile`
     *   *(Optional but recommended for production: `requirements.txt`)*
 3.  Open your terminal, navigate to this directory.
@@ -79,7 +80,7 @@ curl -X POST "http://localhost:8000/users/register" \
         *   `"default_phi3_base"` (uses the base SLM without specific adapters).
         *   `"ReadingExplorerAITA_4thGrade_Pilot1"` (attempts to load adapter from `/app/adapters/reading_explorer_pilot1`).
         *   `"EcoExplorerAITA_7thGrade_Pilot1"` (attempts to load adapter from `/app/adapters/eco_explorer_pilot1`).
-        *   If an adapter for the given `aita_persona_id` is not found or fails to load, the service falls back to the base model for that persona.
+        *   If an adapter for the given `aita_persona_id` is not found or fails to load, the service falls back to the base model for that persona (handled by the model loading utility).
     *   `user_utterance`: The text input from the user.
     *   `conversation_history`: (Optional) A list of previous turns in the format `[{"role": "user", "content": "..."}, {"role": "assistant", "content": "..."}]`.
     *   `subject`, `current_item_id`: (Optional) Used to fetch specific simulated LMS context from the service's internal `MOCK_DB`. If not provided, a default context for the user might be sought.
@@ -106,7 +107,7 @@ curl -X POST "http://localhost:8000/users/register" \
     *   **Contextual System Prompt**: The SLM's system prompt is now dynamically built using (simulated) LMS context fetched based on `user_id`, `subject`, and `item_id`.
     *   **Moderation**: Both user input and AITA raw output are checked by `ModerationService`. Results are logged. If input is unsafe, a polite refusal is returned. If output is unsafe, a generic safe message is returned.
     *   **xAPI Logging**: Interactions are logged to `service_xapi_statements.jsonl` inside the container (or the mounted file if `-v` is used). These logs include moderation details and the full prompt sent to the LLM.
-    *   **Persona/Adapter Loading**: The `debug_info` in the response will indicate the `aita_persona_resolved` and if a user profile was found. Server logs will show attempts to load specific adapters.
+    *   **Persona/Adapter Loading**: The `debug_info` in the response will indicate the `aita_persona_resolved` and if a user profile was found. Server logs will show attempts to load specific adapters via the shared `model_loader_utils.py`.
 
 **Example Response (Conceptual for Eco Explorer):**
 ```json

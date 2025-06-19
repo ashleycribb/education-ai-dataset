@@ -1,12 +1,15 @@
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoTokenizer # AutoModelForCausalLM will be via model_loader_utils
 from typing import List, Dict, Optional, Any
-from peft import PeftModel # For PEFT adapter loading
-import os # For checking adapter path
-import json # For JSON Lines logging
-import datetime # For timestamps
-import uuid # For session ID and xAPI statement ID
-import time # For generation duration
+# from peft import PeftModel # No longer needed directly here
+import os
+import json
+import datetime
+import uuid
+import time
+
+# --- Import new utility ---
+from model_loader_utils import load_model_tokenizer_with_adapter, DummySLM # Import DummySLM
 
 # MCP Imports
 from modelcontextprotocol.client.stdio_client import MCPStdIOClient
@@ -24,38 +27,7 @@ DEFAULT_STUDENT_ID = "student001"
 DEFAULT_SUBJECT = "ReadingComprehension"
 DEFAULT_ITEM_ID = "passage_kitten_001"
 
-# --- Dummy SLM for Fallback ---
-class DummySLM:
-    def __init__(self, device: torch.device, tokenizer: Optional[AutoTokenizer]):
-        self.device = device
-        self.tokenizer = tokenizer
-        self.name_or_path = "DummySLM_Fallback"
-        logger.info("Using DummySLM. SLM will provide fixed responses.")
-
-    def generate(self, input_ids: torch.Tensor, max_new_tokens: int, eos_token_id: int, pad_token_id: int, **kwargs) -> torch.Tensor:
-        dummy_response_text = "This is a dummy response from DummySLM as the main model failed to load. Please proceed with the demo flow or check model loading errors."
-
-        if self.tokenizer:
-            dummy_response_ids = self.tokenizer.encode(dummy_response_text, add_special_tokens=False, return_tensors="pt").to(self.device)
-            if dummy_response_ids.shape[1] > max_new_tokens:
-                dummy_response_ids = dummy_response_ids[:, :max_new_tokens]
-            eos_tensor = torch.tensor([[eos_token_id]], dtype=torch.long, device=self.device)
-            dummy_response_ids_with_eos = torch.cat([dummy_response_ids, eos_tensor], dim=1)
-            full_sequence = torch.cat([input_ids, dummy_response_ids_with_eos], dim=1)
-            return full_sequence
-        else:
-            logger.error("DummySLM: Tokenizer not available for encoding dummy response.")
-            eos_tensor = torch.tensor([[eos_token_id] * (input_ids.shape[1] + 1)], dtype=torch.long, device=self.device)
-            return eos_tensor
-
-    def to(self, device: torch.device):
-        self.device = device
-        return self
-
-    def eval(self):
-        pass
-
-# Simple Console Logger
+# Simple Console Logger (defined locally as it's used throughout)
 class ConsoleLogger:
     def info(self, message: str): print(f"CLIENT_INFO: {message}")
     def error(self, message: str, exc_info: bool = False): print(f"CLIENT_ERROR: {message}")
@@ -63,61 +35,18 @@ class ConsoleLogger:
 
 logger = ConsoleLogger()
 
-# 2. Load Model and Tokenizer
-def load_model_and_tokenizer(model_id: str, adapter_path: Optional[str] = None):
-    logger.info(f"Loading base model and tokenizer for '{model_id}'...")
-    loaded_tokenizer: Optional[AutoTokenizer] = None
-    loaded_model: Optional[Any] = None
-    device_to_use: Optional[torch.device] = None
+# --- Dummy SLM for Fallback (REMOVED - Will use from model_loader_utils) ---
+# class DummySLM:
+#    # ... (previous local definition was here) ...
+#    pass
 
-    try:
-        device_to_use = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        logger.info(f"Using device: {device_to_use}")
-
-        loaded_tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
-        if loaded_tokenizer.pad_token is None:
-            loaded_tokenizer.pad_token = loaded_tokenizer.eos_token
-            logger.info(f"Set tokenizer.pad_token to tokenizer.eos_token: {loaded_tokenizer.eos_token}")
-
-        try:
-            loaded_model = AutoModelForCausalLM.from_pretrained(
-                model_id,
-                torch_dtype="auto",
-                trust_remote_code=True
-            )
-            loaded_model.to(device_to_use)
-
-            if adapter_path and os.path.exists(adapter_path):
-                logger.info(f"Loading PEFT adapter from '{adapter_path}'...")
-                try:
-                    loaded_model = PeftModel.from_pretrained(loaded_model, adapter_path)
-                    logger.info(f"PEFT adapter loaded successfully from {adapter_path}.")
-                except Exception as e_adapter:
-                    logger.error(f"Error loading PEFT adapter: {e_adapter}. Using base model only.", exc_info=True)
-            else:
-                if adapter_path: logger.warning(f"Adapter path '{adapter_path}' not found. Using base model only.")
-                else: logger.info("No adapter path provided. Using base model only.")
-
-            loaded_model.eval()
-            logger.info(f"Model (base: '{model_id}') ready on {device_to_use}.")
-
-        except Exception as e_model:
-            logger.error(f"Failed to load real SLM model '{model_id}': {e_model}", exc_info=True)
-            logger.warning(f"Falling back to DummySLM due to model loading error.")
-            if loaded_tokenizer and device_to_use:
-                loaded_model = DummySLM(device=device_to_use, tokenizer=loaded_tokenizer)
-            else:
-                logger.error("Cannot initialize DummySLM: Tokenizer or device not available.")
-                return None, None, None
-
-        return loaded_model, loaded_tokenizer, device_to_use
-
-    except Exception as e_tokenizer:
-        logger.error(f"Critical error during initial resource loading (tokenizer or device): {e_tokenizer}", exc_info=True)
-        return None, None, None
+# 2. Load Model and Tokenizer (Commented out - replaced by utility)
+# def load_model_and_tokenizer(model_id: str, adapter_path: Optional[str] = None):
+#     # ... (previous local implementation) ...
+#     pass
 
 
-# 3. MCP Client Function
+# 3. MCP Client Function (remains the same)
 def fetch_lms_activity_context(mcp_client: MCPStdIOClient, student_id: str, subject: str, item_id: str) -> Optional[Dict[str, Any]]:
     logger.info(f"Fetching LMS context for student '{student_id}', subject '{subject}', item '{item_id}'...")
     try:
@@ -137,7 +66,7 @@ def fetch_lms_activity_context(mcp_client: MCPStdIOClient, student_id: str, subj
         logger.error(f"Exception during MCP get_resource: {e}", exc_info=True)
         return None
 
-# 4. Chat Loop
+# 4. Chat Loop (Adjusted for potential DummySLM from utility)
 def chat_with_aita(model: Any, tokenizer: AutoTokenizer, device: torch.device, mcp_client: MCPStdIOClient, moderation_service: ModerationService, student_id_override: Optional[str] = None):
     current_student_id = student_id_override if student_id_override else DEFAULT_STUDENT_ID
     current_subject = DEFAULT_SUBJECT
@@ -194,7 +123,6 @@ def chat_with_aita(model: Any, tokenizer: AutoTokenizer, device: torch.device, m
 
         try:
             user_input_raw = input("User: ").strip()
-            # Ensure object.definition.extensions exists before trying to add to it
             if "extensions" not in xapi_statement["object"]["definition"]:
                 xapi_statement["object"]["definition"]["extensions"] = {}
             xapi_statement["object"]["definition"]["extensions"]["http://example.com/xapi/extensions/user_utterance_raw"] = user_input_raw
@@ -209,7 +137,7 @@ def chat_with_aita(model: Any, tokenizer: AutoTokenizer, device: torch.device, m
         if not user_input_raw: continue
 
         mod_input_results = moderation_service.check_text(user_input_raw)
-        if "extensions" not in xapi_statement["result"]: xapi_statement["result"]["extensions"] = {} # Ensure extensions key exists
+        if "extensions" not in xapi_statement["result"]: xapi_statement["result"]["extensions"] = {}
         xapi_statement["result"]["extensions"]["http://example.com/xapi/extensions/input_moderation_details"] = mod_input_results
         if not mod_input_results["is_safe"]:
             polite_refusal = "AITA: I'm sorry, I can't process that request. Let's stick to our learning task or try phrasing it differently."
@@ -233,32 +161,22 @@ def chat_with_aita(model: Any, tokenizer: AutoTokenizer, device: torch.device, m
             logger.info("AITA is thinking...")
             generation_start_time = time.time()
 
-            raw_response_text = ""
-            if isinstance(model, DummySLM):
-                generated_outputs_tensor = model.generate(
+            with torch.no_grad():
+                generated_outputs = model.generate(
                     inputs.input_ids, max_new_tokens=300,
                     eos_token_id=tokenizer.eos_token_id,
-                    pad_token_id=tokenizer.pad_token_id
+                    pad_token_id=tokenizer.pad_token_id,
+                    temperature=0.7, top_p=0.9, do_sample=True
                 )
-                response_ids = generated_outputs_tensor[0][input_ids_length:]
-                raw_response_text = tokenizer.decode(response_ids, skip_special_tokens=True).strip()
-            else:
-                with torch.no_grad():
-                    generated_outputs = model.generate(
-                        inputs.input_ids, max_new_tokens=300, temperature=0.7, top_p=0.9, do_sample=True,
-                        pad_token_id=tokenizer.pad_token_id, eos_token_id=tokenizer.eos_token_id
-                    )
-                response_ids = generated_outputs[0][input_ids_length:]
-                raw_response_text = tokenizer.decode(response_ids, skip_special_tokens=True).strip()
 
             generation_duration_s = time.time() - generation_start_time
             xapi_statement["result"]["duration"] = f"PT{generation_duration_s:.2f}S"
 
-            # Ensure extensions exist before adding to it
+            response_ids = generated_outputs[0][input_ids_length:]
+            raw_response_text = tokenizer.decode(response_ids, skip_special_tokens=True).strip()
+
             if "extensions" not in xapi_statement["object"]["definition"]: xapi_statement["object"]["definition"]["extensions"] = {}
             xapi_statement["object"]["definition"]["extensions"]["http://example.com/xapi/extensions/aita_response_raw"] = raw_response_text
-
-            # Add AITA Reasoner placeholder fields for AITA turns
             xapi_statement["object"]["definition"]["extensions"]["http://example.com/xapi/extensions/pedagogical_notes"] = ["Placeholder: Note 1 for this AITA turn.", "Placeholder: Note 2 indicating strategy."]
             xapi_statement["object"]["definition"]["extensions"]["http://example.com/xapi/extensions/aita_turn_narrative_rationale"] = "Placeholder: This is a simulated narrative rationale for the AITA's current turn."
 
@@ -301,11 +219,11 @@ if __name__ == "__main__":
         logger.info("Moderation Service initialized.")
     except Exception as e:
         logger.error(f"Failed to initialize ModerationService: {e}. Safeguards will be non-functional.", exc_info=True)
-        class DummyModerationService:
+        class _DummyModerationService:
             def check_text(self, text: str) -> Dict[str, Any]:
                 return {"is_safe": True, "flagged_categories": [], "scores": {}, "model_used": "dummy_moderation_service_due_to_error", "status": "service_init_failed"}
-        moderation_service = DummyModerationService()
-        logger.warning("Using DummyModerationService. Content will not be actively moderated.")
+        moderation_service = _DummyModerationService()
+        logger.warning("Using _DummyModerationService. Content will not be actively moderated.")
 
     mcp_client = MCPStdIOClient()
     try:
@@ -313,18 +231,51 @@ if __name__ == "__main__":
         mcp_client.start()
         logger.info("MCP Client started.")
 
-        model, tokenizer, device = load_model_and_tokenizer(MODEL_ID, adapter_path=ADAPTER_CHECKPOINT_PATH)
+        # Call the utility function for loading model and tokenizer
+        model, tokenizer, device = load_model_tokenizer_with_adapter(
+            MODEL_ID,
+            adapter_path=ADAPTER_CHECKPOINT_PATH,
+            logger=logger
+        )
+
+        # Refined DummySLM fallback logic
+        if model is None or tokenizer is None:
+            logger.warning(f"Failed to load real SLM model/tokenizer for '{MODEL_ID}' via utility. Falling back to DummySLM.")
+
+            if tokenizer is None: # Attempt to load tokenizer again only if it's None
+                logger.info(f"Attempting to re-load tokenizer for DummySLM: {MODEL_ID}")
+                try:
+                    # Directly use AutoTokenizer from transformers, it's already imported
+                    tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, trust_remote_code=True)
+                    if tokenizer.pad_token is None: tokenizer.pad_token = tokenizer.eos_token
+                    logger.info("Tokenizer re-loaded for DummySLM.")
+                except Exception as e_tok_dummy:
+                    logger.error(f"CRITICAL: Failed to load tokenizer even for DummySLM: {e_tok_dummy}. Cannot proceed.", exc_info=True)
+                    tokenizer = None
+
+            if device is None: # Determine device for DummySLM if not already set
+                device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+                logger.info(f"Device for DummySLM set to: {device}")
+
+            if tokenizer and device:
+                 model = DummySLM(device=device, tokenizer=tokenizer, logger=logger) # Pass logger
+                 logger.info("DummySLM has been instantiated.")
+            else:
+                 logger.error("CRITICAL: Tokenizer and/or device unavailable, cannot instantiate DummySLM. Exiting.")
+                 critical_error_log = {"id": str(uuid.uuid4()), "error_message": "Tokenizer/device unavailable for DummySLM."}
+                 with open(XAPI_LOG_FILE_PATH, 'a') as f: json.dump(critical_error_log, f); f.write('\n')
+                 model = None
 
         if model and tokenizer and device:
             chat_with_aita(model, tokenizer, device, mcp_client, moderation_service, student_id_override=student_id_for_session)
         else:
-            logger.error("Failed to load model and/or tokenizer. Exiting CLI.")
+            logger.error("Failed to initialize model and tokenizer even with DummySLM fallback. Exiting CLI.")
             critical_error_log = {
                 "id": str(uuid.uuid4()), "actor": {"name": "System"},
                 "verb": {"id": "http://adlnet.gov/expapi/verbs/failed", "display": {"en-US": "failed_system_initialization"}},
                 "object": {"id": "http://example.com/aita_cli", "definition": {"name": {"en-US": "AITA CLI System"}}},
-                "result": {"extensions":{"http://example.com/xapi/extensions/error_message": "Model or tokenizer failed to load."}},
-                "timestamp": datetime.datetime.utcnow().isoformat() + "Z", "stage": "initialization"
+                "result": {"extensions":{"http://example.com/xapi/extensions/error_message": "Model or tokenizer failed to load, including fallback."}},
+                "timestamp": datetime.datetime.utcnow().isoformat() + "Z", "stage": "initialization_cli"
             }
             with open(XAPI_LOG_FILE_PATH, 'a') as f: json.dump(critical_error_log, f); f.write('\n')
 
