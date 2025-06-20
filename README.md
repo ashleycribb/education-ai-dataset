@@ -39,24 +39,47 @@ An AI-powered educational platform featuring the AITA (AI Teaching Assistant) sy
 
 ## 🚀 Quick Start
 
-### Running the AITA Interaction Service
+### 🎉 NEW: Unified Feature Launcher
 
+**Start all services with one command:**
 ```bash
-python aita_interaction_service.py
+# Command line mode - starts all services
+python feature_launcher.py start
+
+# GUI mode - interactive service management
+streamlit run feature_launcher.py
 ```
 
-The service will be available at `http://localhost:8000`
+### Running Individual Services
 
-### Running the Teacher Dashboard
-
+#### Core Services
 ```bash
-streamlit run teacher_dashboard_main.py
+# Main AITA Backend
+python aita_interaction_service.py          # Port 8000
+
+# API Integration Hub (NEW!)
+python api_integration_hub.py               # Port 8001
+
+# Real-time Notifications (NEW!)
+python realtime_notifications.py            # Port 8002
+
+# Quiz Generator (NEW!)
+python quiz_generator.py                    # Port 8003
 ```
 
-### Running the Student Frontend
-
+#### Dashboards and Interfaces
 ```bash
-streamlit run student_frontend_streamlit.py
+# Teacher Dashboard
+streamlit run teacher_dashboard_main.py     # Port 12000
+
+# Student Frontend  
+streamlit run student_frontend_streamlit.py # Port 12001
+
+# Advanced Analytics (NEW!)
+streamlit run advanced_analytics.py         # Port 12002
+
+# Gamification Dashboard (NEW!)
+streamlit run gamification_system.py        # Port 12003
 ```
 
 ### Using Docker
@@ -65,6 +88,45 @@ streamlit run student_frontend_streamlit.py
 docker build -t education-ai .
 docker run -p 8000:8000 education-ai
 ```
+
+## 🎯 New Features (2024)
+
+### 🔌 API Integration Hub
+- **RESTful API endpoints** for LMS integration
+- **LTI (Learning Tools Interoperability)** support
+- **Webhook system** for real-time integrations
+- **Student/session management** APIs
+- **Analytics and reporting** endpoints
+
+### 🔔 Real-time Notification System
+- **WebSocket-based notifications** for teachers
+- **Instant alerts** for help requests and misconceptions
+- **Priority-based alert system** (low, medium, high, urgent)
+- **Notification history** and analytics
+- **Teacher subscription management**
+
+### 📊 Advanced Learning Analytics
+- **Enhanced analytics dashboard** with interactive visualizations
+- **Learning pattern identification** (visual, auditory, kinesthetic, reading/writing)
+- **Predictive insights** for student intervention
+- **Risk assessment** and early warning system
+- **Personalized recommendations** for students and teachers
+
+### 🧪 Interactive Quiz/Assessment Generator
+- **AI-powered quiz generation** based on conversation content
+- **Multiple question types** (multiple choice, true/false, short answer, fill-in-blank)
+- **Automatic grading system** with detailed feedback
+- **Difficulty level adjustment** (easy, medium, hard)
+- **Performance analytics** and progress tracking
+
+### 🏆 Student Progress Gamification
+- **Comprehensive badge system** with 5 rarity levels
+- **Experience points and leveling** system
+- **Leaderboards** and friendly competition
+- **Achievement analytics** and progress tracking
+- **Engagement motivation** tools
+
+📖 **Detailed Guide**: See [NEW_FEATURES_GUIDE.md](NEW_FEATURES_GUIDE.md) for complete documentation
 
 ## 📁 Project Structure
 
@@ -78,6 +140,15 @@ education-ai-dataset/
 ├── dashboard_data_manager.py      # Data management for dashboards
 ├── k12_mcp_client_sdk/           # MCP client SDK
 ├── k12_mcp_server_sdk/           # MCP server SDK
+├── 
+├── # NEW FEATURES (2024)
+├── feature_launcher.py           # Unified service launcher
+├── api_integration_hub.py        # API Integration Hub
+├── realtime_notifications.py     # Real-time notification system
+├── advanced_analytics.py         # Enhanced analytics dashboard
+├── quiz_generator.py             # AI-powered quiz generator
+├── gamification_system.py        # Student progress gamification
+├── NEW_FEATURES_GUIDE.md         # Comprehensive feature documentation
 ├── pages/                        # Dashboard pages
 ├── source_data/                  # Raw data sources
 ├── data_processing_scripts.py    # Data processing utilities
