@@ -128,6 +128,16 @@ docker run -p 8000:8000 education-ai
 
 📖 **Detailed Guide**: See [NEW_FEATURES_GUIDE.md](NEW_FEATURES_GUIDE.md) for complete documentation
 
+### 🔌 Canvas LMS Integration (NEW!)
+- **Model Context Protocol (MCP) Server** for seamless Canvas integration
+- **Assignment Analysis** with AI-powered difficulty assessment and time estimation
+- **NC Standards Alignment** automatic detection and mapping
+- **Real-time Submission Tracking** and progress monitoring
+- **FERPA-Compliant Data Handling** with secure API authentication
+- **Multi-format Content Support** (HTML, Markdown, Plain Text)
+
+📋 **Canvas Integration**: See [CANVAS_MCP_INTEGRATION.md](CANVAS_MCP_INTEGRATION.md) for setup and usage
+
 ## 📁 Project Structure
 
 ```
@@ -149,6 +159,17 @@ education-ai-dataset/
 ├── quiz_generator.py             # AI-powered quiz generator
 ├── gamification_system.py        # Student progress gamification
 ├── NEW_FEATURES_GUIDE.md         # Comprehensive feature documentation
+├── 
+├── # CANVAS LMS INTEGRATION
+├── canvas_mcp_server.ts          # Canvas MCP server implementation
+├── CANVAS_MCP_INTEGRATION.md     # Canvas integration documentation
+├── package.json                  # Node.js dependencies for Canvas MCP
+├── tsconfig.json                 # TypeScript configuration
+├── .env.example                  # Environment configuration template
+├── 
+├── # NORTH CAROLINA INTEGRATION
+├── NC_INTEGRATION_ANALYSIS.md    # NC standards integration analysis
+├── NC_IMPLEMENTATION_GUIDE.md    # NC district implementation guide
 ├── pages/                        # Dashboard pages
 ├── source_data/                  # Raw data sources
 ├── data_processing_scripts.py    # Data processing utilities
