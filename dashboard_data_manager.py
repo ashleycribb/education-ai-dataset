@@ -181,6 +181,3 @@ def get_unique_student_ids(_all_statements: List[Dict[str, Any]]) -> List[str]:
             if student_id and student_id != "Unknown Student":
                 student_ids.add(student_id)
     return sorted(list(student_ids))
-
-```
-Now, I will update `pages/02_Session_Transcript_View.py`.

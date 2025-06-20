@@ -285,5 +285,3 @@ if __name__ == "__main__":
         logger.info("Stopping MCP Client...")
         mcp_client.stop()
         logger.info("MCP Client stopped. CLI session ended.")
-
-[end of aita_mcp_client.py]
