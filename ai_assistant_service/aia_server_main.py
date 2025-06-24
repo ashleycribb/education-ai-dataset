@@ -5,6 +5,8 @@ from typing import List, Dict, Any, Tuple
 
 # Assuming assistant_logic_module is in the same directory (ai_assistant_service)
 from .assistant_logic_module import AIAssistant, get_current_activity
+from .db import connect_db, disconnect_db, create_raw_xapi_table_if_not_exists # Import DB functions
+from fastapi.middleware.cors import CORSMiddleware # Import CORS
 
 # --- Pydantic Models ---
 class StartRequest(BaseModel):
@@ -28,8 +30,30 @@ app = FastAPI(
     description="Provides API endpoints to interact with an AI learning assistant."
 )
 
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins for development/demo.
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all standard HTTP methods.
+    allow_headers=["*"],  # Allows all headers.
+)
+
 # In-memory session storage
 active_sessions: Dict[str, AIAssistant] = {}
+
+# --- Database Lifecycle Events ---
+@app.on_event("startup")
+async def startup_db_client():
+    await connect_db()
+    # This is a good place to create tables if they don't exist,
+    # especially for development or simpler setups.
+    # For production, migrations (e.g. Alembic) are usually preferred.
+    await create_raw_xapi_table_if_not_exists()
+
+@app.on_event("shutdown")
+async def shutdown_db_client():
+    await disconnect_db()
 
 # --- API Endpoints ---
 
@@ -75,7 +99,6 @@ async def interact_with_activity_endpoint(request: InteractRequest):
     if assistant.is_activity_complete:
         ai_messages, xapi_statements, is_complete = assistant.get_pending_outputs()
         final_message = "This activity is already complete. Please start a new activity."
-        # Add completion message only if it's not already the last one or list is empty
         if not ai_messages or (ai_messages and ai_messages[-1] != final_message):
              ai_messages.append(final_message)
 
@@ -102,6 +125,4 @@ async def read_root():
 
 if __name__ == "__main__":
     import uvicorn
-    # Recommended to run with `uvicorn ai_assistant_service.aia_server_main:app --reload --port 8002` from parent directory
-    # This allows direct execution for simplicity if this file is run from within `ai_assistant_service` directory.
     uvicorn.run("aia_server_main:app", host="0.0.0.0", port=8002, reload=True)

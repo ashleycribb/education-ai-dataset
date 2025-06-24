@@ -5,7 +5,7 @@ from datetime import datetime
 
 from . import crud
 from . import models
-from .db import connect_db, disconnect_db # Import connect_db and disconnect_db
+from .db import connect_db, disconnect_db, create_mcp_contexts_table_if_not_exists # Import new function
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="MCP Server", version="0.1.0")
@@ -20,14 +20,12 @@ app.add_middleware(
 )
 
 @app.on_event("startup")
-async def startup():
+async def startup(): # Renamed for clarity, though 'startup' is fine
     await connect_db()
-    # Optionally, create tables if they don't exist.
-    # from .db import create_mcp_contexts_table_if_not_exists # If you add this function to db.py
-    # await create_mcp_contexts_table_if_not_exists()
+    await create_mcp_contexts_table_if_not_exists() # Add this call
 
 @app.on_event("shutdown")
-async def shutdown():
+async def shutdown(): # Renamed for clarity, though 'shutdown' is fine
     await disconnect_db()
 
 @app.get("/")
