@@ -1,153 +1,78 @@
-# Education AI Dataset Standard: Specification
+# xAPI Profile for AI in Education: Specification
 
-This document provides the technical specification for the Education AI Dataset Standard. It defines the core data structures and their relationships, providing a common format for representing educational data.
+This document provides the technical specification for the xAPI Profile for AI in Education. This profile extends the [xAPI specification](https://github.com/adlnet/xAPI-Spec) to provide a common data model for interactions with AI-powered educational tools.
 
-## Core Principles
+## 1. Core Concepts
 
-*   **JSON-based:** The standard uses a JSON format for data exchange, ensuring broad compatibility and ease of use.
-*   **Well-defined Schema:** All data structures are clearly defined, specifying required fields, data types, and relationships.
-*   **Extensible:** The standard is designed to be extensible, allowing for the addition of new data structures and fields to meet specific needs.
+This profile is built on the core data structures of the xAPI standard:
 
-## Serialization Formats
+*   **Statement:** The fundamental data structure, representing an event in the `Actor-Verb-Object` format. All data is recorded as a stream of xAPI statements.
+*   **Actor:** Represents the person or group performing the action. In this profile, the `Actor` will typically be a student or a teacher, but it can also be an AI agent.
+*   **Verb:** Defines the action that was performed (e.g., "completed," "asked," "suggested").
+*   **Object:** The thing that the action was performed on. This is typically an `Activity` in xAPI.
+*   **Activity:** A representation of a learning resource, such as a course, assessment, or a specific interaction with an AI tutor.
+*   **Learning Record Store (LRS):** The database where the xAPI statements are stored.
+
+## 2. Representing Core Educational Data
+
+Our previous data structures (`Student`, `Educator`, `Course`, etc.) can be mapped directly to xAPI concepts:
+
+*   **Student and Educator:** Both are represented as an `Actor` in xAPI statements. The actor's role can be distinguished by their `objectType` (`Agent` for a person) and potentially through custom extensions.
+*   **Course, Learning Objective, and Assessment:** These are all represented as `Activities` in xAPI. An `Activity` has a unique ID and a `definition` that can be used to describe its type (e.g., "course," "assessment").
+
+## 3. Vocabulary for AI Interactions
+
+This profile introduces a new vocabulary (a set of `Verbs` and `Activity Types`) to describe the unique interactions that occur in AI-powered learning environments.
+
+### 3.1. Verbs
+
+| Verb ID                                           | Display Name           | Description                                                                                             |
+| ------------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------- |
+| `https://w3id.org/xapi/ai/verbs/suggested`          | suggested              | Indicates that an AI agent suggested a resource or action to a learner.                                 |
+| `https://w3id.org/xapi/ai/verbs/assisted`           | assisted               | Indicates that a learner's action was assisted by an AI agent.                                            |
+| `https://w3id.org/xapi/ai/verbs/generated`          | generated              | Indicates that an AI agent generated content, such as a quiz question or a personalized learning path.    |
+| `https://w3id.org/xapi/ai/verbs/summarized`         | summarized             | Indicates that an AI agent provided a summary of a resource or a student's progress.                      |
+
+### 3.2. Activity Types
+
+| Activity Type ID                                  | Display Name           | Description                                                                                             |
+| ------------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------- |
+| `https://w3id.org/xapi/ai/activity-types/ai-tutor`  | AI Tutor               | Represents an interaction with a conversational AI tutor.                                               |
+| `https://w3id.org/xapi/ai/activity-types/agent`     | AI Agent               | Represents an AI agent acting as a participant in the learning process (e.g., as the `Actor` of a statement). |
+
+### 3.3. Use Case: AI Teacher's Assistant
+
+To enable quantitative and qualitative analysis of how an AI assistant helps a learner, this profile defines the following additional `Verbs`. These are designed to be used in statements where the `Actor` is the AI assistant and the `Object` is the learning activity being discussed.
+
+| Verb ID                                                | Display Name           | Description                                                                                             |
+| ------------------------------------------------------ | ---------------------- | ------------------------------------------------------------------------------------------------------- |
+| `https://w3id.org/xapi/ai/verbs/provided-hint`           | provided hint          | Indicates that the AI assistant provided a hint to the learner.                                         |
+| `https://w3id.org/xapi/ai/verbs/gave-feedback`           | gave feedback          | Indicates that the AI assistant gave feedback on a learner's work or answer.                              |
+| `https://w3id.org/xapi/ai/verbs/clarified-concept`       | clarified concept      | Indicates that the AI assistant provided an explanation to clarify a concept.                             |
+
+### 3.4. Context Extensions for AI Teacher's Assistant
+
+To capture the qualitative data essential for analysis, the following `Context Extensions` should be used in the `context` property of a statement.
+
+| Extension ID                                                 | Display Name           | Description                                                                                             | Data Type |
+| ------------------------------------------------------------ | ---------------------- | ------------------------------------------------------------------------------------------------------- | --------- |
+| `https://w3id.org/xapi/ai/extensions/prompt`                   | prompt                 | The specific question, statement, or action from the learner that triggered the AI's assistance.        | `string`  |
+| `https://w3id.org/xapi/ai/extensions/assistance-content`       | assistance-content     | The full content of the hint, feedback, or explanation provided by the AI assistant.                  | `string`  |
+
+## 4. Security and Privacy
+
+This profile inherits the robust security and privacy model of the xAPI and LRS specifications. All data should be:
+
+*   Transmitted securely over TLS.
+*   Stored in a conformant LRS, which manages authentication and authorization.
+*   Handled in accordance with data minimization and consent principles.
+
+## 5. Serialization Formats
 
 ### JSON (Default)
 
-JSON is the default format for interoperability. It is widely supported and easy to parse. All systems compliant with this standard should be able to process data in JSON format.
+JSON is the default format for all xAPI statements.
 
 ### TOON (Recommended for LLMs)
 
-For applications involving Large Language Models (LLMs), we highly recommend [TOON (Token-Oriented Object Notation)](https://github.com/toon-format/toon). TOON is a serialization format that is optimized for LLM prompts, offering significant advantages:
-
-*   **Token Efficiency:** TOON's compact syntax can reduce the number of tokens by ~40% compared to JSON, leading to lower API costs and faster processing.
-*   **Higher Accuracy:** The format includes "guardrails" like explicit array lengths and field headers, which help LLMs parse data more reliably.
-
-When providing large amounts of data from our standard to an LLM (e.g., a student's full interaction history for a tutoring agent), using TOON is the preferred method.
-
-## Core Data Structures
-
-### 1. Student
-
-Represents an individual student.
-
-```json
-{
-  "studentId": "string (unique)",
-  "attributes": {
-    "demographics": {
-      "birthDate": "date",
-      "gender": "string"
-    },
-    "enrollmentStatus": "string (e.g., 'active', 'inactive')"
-  },
-  "privacySettings": {
-    "dataSharingConsent": "boolean",
-    "anonymizationLevel": "string (e.g., 'full', 'partial')"
-  }
-}
-```
-
-### 2. Educator
-
-Represents a teacher, instructor, or other educator.
-
-```json
-{
-  "educatorId": "string (unique)",
-  "attributes": {
-    "name": "string",
-    "roles": ["string"]
-  }
-}
-```
-
-### 3. Course
-
-Represents a course of study.
-
-```json
-{
-  "courseId": "string (unique)",
-  "title": "string",
-  "description": "string",
-  "learningObjectives": ["string (learningObjectiveId)"]
-}
-```
-
-### 4. Learning Objective
-
-Represents a specific learning goal or outcome.
-
-```json
-{
-  "learningObjectiveId": "string (unique)",
-  "description": "string",
-  "masteryLevel": "number"
-}
-```
-
-### 5. Assessment
-
-Represents a test, quiz, or other form of assessment.
-
-```json
-{
-  "assessmentId": "string (unique)",
-  "title": "string",
-  "assessmentType": "string (e.g., 'quiz', 'exam', 'homework')",
-  "items": [
-    {
-      "itemId": "string (unique)",
-      "itemType": "string (e.g., 'multiple-choice', 'essay')",
-      "learningObjectives": ["string (learningObjectiveId)"]
-    }
-  ]
-}
-```
-
-### 6. Interaction Event
-
-Represents a specific interaction between a student and a learning resource.
-
-```json
-{
-  "eventId": "string (unique)",
-  "studentId": "string",
-  "timestamp": "datetime",
-  "eventType": "string (e.g., 'view_resource', 'submit_assessment')",
-  "data": {
-    "resourceId": "string",
-    "assessmentId": "string",
-    "studentResponse": "any"
-  }
-}
-```
-
-## Privacy and Security
-
-The security and privacy of student data are of paramount importance. This standard is designed with a "privacy by design" approach, and all implementations should adhere to the following principles:
-
-### 1. Data Minimization
-
-Collect and store only the data that is absolutely necessary for the intended educational purpose. Avoid collecting personally identifiable information (PII) whenever possible.
-
-### 2. Data Anonymization and Pseudonymization
-
-Where PII is not required for the functionality of an application, data should be anonymized. In cases where data needs to be linked to a specific student, pseudonymization techniques should be used to replace PII with a non-identifying token.
-
-The `Student` object includes a `privacySettings` field to help manage this:
-*   `anonymizationLevel`: Can be set to `'full'` (no PII), `'partial'` (some PII removed), or `'none'` (raw data). Implementations should default to the highest level of anonymization possible.
-
-### 3. Role-Based Access Control (RBAC)
-
-Access to data should be strictly controlled based on the user's role. For example:
-*   An **Educator** should only have access to the data of the students in their own courses.
-*   A **Student** should only have access to their own data.
-*   An **Administrator** may have broader access, but this should be carefully audited.
-
-### 4. Secure Data Transmission and Storage
-
-All data should be encrypted in transit (e.g., using TLS) and at rest (e.g., using AES-256).
-
-### 5. Consent and Transparency
-
-Students (and/or their legal guardians) should be informed about what data is being collected and how it is being used. The `Student` object's `dataSharingConsent` field should be used to track whether a student has provided consent for their data to be used in specific ways (e.g., for research).
+For applications that send large volumes of xAPI statements to LLMs (e.g., for analysis or to provide context to an AI tutor), we recommend serializing the JSON statements into [TOON (Token-Oriented Object Notation)](https://github.com/toon-format/toon) to reduce token count and improve parsing accuracy.
