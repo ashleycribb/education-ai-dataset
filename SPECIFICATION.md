@@ -40,25 +40,6 @@ This profile introduces a new vocabulary (a set of `Verbs` and `Activity Types`)
 | `https://w3id.org/xapi/ai/activity-types/ai-tutor`  | AI Tutor               | Represents an interaction with a conversational AI tutor.                                               |
 | `https://w3id.org/xapi/ai/activity-types/agent`     | AI Agent               | Represents an AI agent acting as a participant in the learning process (e.g., as the `Actor` of a statement). |
 
-### 3.3. Use Case: AI Teacher's Assistant
-
-To enable quantitative and qualitative analysis of how an AI assistant helps a learner, this profile defines the following additional `Verbs`. These are designed to be used in statements where the `Actor` is the AI assistant and the `Object` is the learning activity being discussed.
-
-| Verb ID                                                | Display Name           | Description                                                                                             |
-| ------------------------------------------------------ | ---------------------- | ------------------------------------------------------------------------------------------------------- |
-| `https://w3id.org/xapi/ai/verbs/provided-hint`           | provided hint          | Indicates that the AI assistant provided a hint to the learner.                                         |
-| `https://w3id.org/xapi/ai/verbs/gave-feedback`           | gave feedback          | Indicates that the AI assistant gave feedback on a learner's work or answer.                              |
-| `https://w3id.org/xapi/ai/verbs/clarified-concept`       | clarified concept      | Indicates that the AI assistant provided an explanation to clarify a concept.                             |
-
-### 3.4. Context Extensions for AI Teacher's Assistant
-
-To capture the qualitative data essential for analysis, the following `Context Extensions` should be used in the `context` property of a statement.
-
-| Extension ID                                                 | Display Name           | Description                                                                                             | Data Type |
-| ------------------------------------------------------------ | ---------------------- | ------------------------------------------------------------------------------------------------------- | --------- |
-| `https://w3id.org/xapi/ai/extensions/prompt`                   | prompt                 | The specific question, statement, or action from the learner that triggered the AI's assistance.        | `string`  |
-| `https://w3id.org/xapi/ai/extensions/assistance-content`       | assistance-content     | The full content of the hint, feedback, or explanation provided by the AI assistant.                  | `string`  |
-
 ## 4. Security and Privacy
 
 This profile inherits the robust security and privacy model of the xAPI and LRS specifications. All data should be:

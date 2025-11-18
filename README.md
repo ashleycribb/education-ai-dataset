@@ -26,12 +26,6 @@ This project provides a formal xAPI Profile that defines the specific `Verbs`, `
 
 This profile will serve as a foundational layer, which can be further extended by the community to meet the needs of specific AI applications.
 
-## Use Case: Analyzing AI Teacher's Assistants
-
-To demonstrate the power of this profile, we have defined a specific vocabulary for the "AI Teacher's Assistant" use case. This extension allows for the detailed capture of interactions where an AI provides direct help to a learner.
-
-By using the specialized `Verbs` (e.g., `provided-hint`, `gave-feedback`) and `Context Extensions` defined in this profile, researchers and educators can perform both quantitative and qualitative analysis on the effectiveness of AI assistants. For example, one could analyze not just *how often* an AI provides hints, but also the *exact content* of those hints and the learner prompts that triggered them.
-
 ## Guiding Principles
 
 *   **xAPI Alignment:** We will adhere to the principles and data structures of the xAPI specification to ensure maximum interoperability.
