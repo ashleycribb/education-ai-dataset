@@ -1,1 +1,38 @@
-# education-ai-dataset
+# xAPI Profile for AI in Education
+
+## The Vision: Extending xAPI for the Age of AI
+
+This project defines a foundational **xAPI Profile** designed to capture the unique interactions that occur in AI-powered learning environments. Our goal is to extend the power and interoperability of the Experience API (xAPI) to create a common language for AI agents, small learning models (SLMs), and AI-powered teacher's assistants.
+
+By building on the proven foundation of xAPI, we can ensure that data from these next-generation educational tools is interoperable, secure, and part of the wider learning ecosystem.
+
+## The Problem: A Missing Vocabulary for AI Interactions
+
+The existing xAPI standard is excellent for capturing a wide range of learning experiences. However, as AI tutors and agents become more common, we need a specialized vocabulary to describe the new types of interactions they enable, such as:
+
+*   An AI agent personalizing a learning path for a student.
+*   A small learning model generating a new assessment question.
+*   A teacher's assistant AI summarizing a student's progress.
+
+Without a common data model for these events, data from AI educational tools will become siloed, making it difficult to analyze the effectiveness of these new technologies and integrate them with existing systems like Learning Record Stores (LRS).
+
+## The Solution: A Foundational xAPI Profile
+
+This project provides a formal xAPI Profile that defines the specific `Verbs`, `Activity Types`, and statement templates needed to track AI-driven learning experiences. By providing this shared vocabulary, we can enable a future where:
+
+*   Data from an AI tutor can be seamlessly stored in any conformant LRS.
+*   Learning analytics platforms can compare the effectiveness of different AI agents.
+*   Small learning models can be trained on standardized, high-quality datasets of AI-student interactions.
+
+This profile will serve as a foundational layer, which can be further extended by the community to meet the needs of specific AI applications.
+
+## Guiding Principles
+
+*   **xAPI Alignment:** We will adhere to the principles and data structures of the xAPI specification to ensure maximum interoperability.
+*   **Focus on AI:** This profile is specifically focused on defining the data models for interactions that are unique to AI-powered educational tools.
+*   **Privacy and Security First:** We will leverage the robust security and privacy features of the xAPI standard and the LRS specification.
+*   **Open and Collaborative:** This is an open-source project, and we welcome contributions from educators, developers, and researchers.
+
+## Get Involved
+
+This project is in its early stages, and we are actively seeking collaborators. Whether you are an educator with deep domain expertise, a developer with experience in AI and xAPI, or a researcher with a passion for the future of education, we invite you to join us in extending xAPI for the age of AI.
