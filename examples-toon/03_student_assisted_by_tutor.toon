@@ -1,0 +1,26 @@
+actor:
+  objectType: Agent
+  name: Sally Student
+  mbox: mailto:sally.student@example.com
+verb:
+  id: https://w3id.org/xapi/ai/verbs/assisted
+  display:
+    en-US: assisted
+object:
+  objectType: Activity
+  id: http://example.com/activities/quiz-1/question-2
+  definition:
+    name:
+      en-US: Question 2: Explain Big O notation.
+    type: http://adlnet.gov/expapi/activities/interaction
+context:
+  contextActivities:
+    parent[1]:
+      objectType: Activity
+      id: http://example.com/activities/quiz-1
+    category[1]:
+      objectType: Activity
+      id: https://w3id.org/xapi/ai/activity-types/ai-tutor
+      definition:
+        name:
+          en-US: AI Tutor
