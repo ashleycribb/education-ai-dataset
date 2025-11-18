@@ -1,0 +1,17 @@
+{
+  "assessmentId": "as-001",
+  "title": "Quiz 1: Basic Algorithms",
+  "assessmentType": "quiz",
+  "items": [
+    {
+      "itemId": "q1-item-001",
+      "itemType": "multiple-choice",
+      "learningObjectives": ["lo-001"]
+    },
+    {
+      "itemId": "q1-item-002",
+      "itemType": "essay",
+      "learningObjectives": ["lo-002"]
+    }
+  ]
+}
