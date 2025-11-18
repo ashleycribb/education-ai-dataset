@@ -1,0 +1,13 @@
+{
+  "eventId": "evt-001",
+  "studentId": "st-001",
+  "timestamp": "2025-10-26T10:00:00Z",
+  "eventType": "submit_assessment",
+  "data": {
+    "assessmentId": "as-001",
+    "studentResponse": {
+      "q1-item-001": "A",
+      "q1-item-002": "An algorithm is a set of instructions for solving a problem."
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "courseId": "cs-101",
+  "title": "Introduction to Computer Science",
+  "description": "A foundational course on the principles of computer science.",
+  "learningObjectives": ["lo-001", "lo-002", "lo-003"]
+}
