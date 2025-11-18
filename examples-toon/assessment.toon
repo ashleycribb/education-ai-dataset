@@ -1,0 +1,6 @@
+assessmentId: as-001
+title: Quiz 1: Basic Algorithms
+assessmentType: quiz
+items[2]{itemId,itemType,learningObjectives}:
+  q1-item-001,multiple-choice,[lo-001]
+  q1-item-002,essay,[lo-002]
