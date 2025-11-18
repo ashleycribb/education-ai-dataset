@@ -1,0 +1,9 @@
+studentId: st-001
+attributes:
+  demographics:
+    birthDate: 2008-05-12
+    gender: female
+  enrollmentStatus: active
+privacySettings:
+  dataSharingConsent: true
+  anonymizationLevel: partial
