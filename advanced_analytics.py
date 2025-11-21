@@ -58,6 +58,13 @@ class AnalyticsEngine:
         names = ["Alice Johnson", "Bob Smith", "Carol Davis", "David Wilson", "Emma Brown",
                 "Frank Miller", "Grace Lee", "Henry Taylor", "Ivy Chen", "Jack Anderson"]
 
+        
+    def _generate_sample_data(self) -> List[StudentAnalytics]:
+        """Generate sample analytics data for demonstration"""
+        students = []
+        names = ["Alice Johnson", "Bob Smith", "Carol Davis", "David Wilson", "Emma Brown", 
+                "Frank Miller", "Grace Lee", "Henry Taylor", "Ivy Chen", "Jack Anderson"]
+        
         for i, name in enumerate(names):
             student = StudentAnalytics(
                 student_id=f"student_{i+1:03d}",

@@ -1,0 +1,4 @@
+educatorId: ed-001
+attributes:
+  name: Dr. Evelyn Reed
+  roles[2]: instructor,advisor
