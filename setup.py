@@ -34,16 +34,16 @@ def check_syntax():
     print("🔄 Checking Python syntax...")
     python_files = list(Path('.').glob('**/*.py'))
     errors = []
-    
+
     for file in python_files:
         if 'venv' in str(file) or '__pycache__' in str(file):
             continue
         try:
-            subprocess.run([sys.executable, '-m', 'py_compile', str(file)], 
+            subprocess.run([sys.executable, '-m', 'py_compile', str(file)],
                          check=True, capture_output=True)
         except subprocess.CalledProcessError as e:
             errors.append(f"  {file}: {e.stderr.decode()}")
-    
+
     if errors:
         print("❌ Syntax errors found:")
         for error in errors:
@@ -58,7 +58,7 @@ def install_dependencies():
     if not os.path.exists('requirements.txt'):
         print("❌ requirements.txt not found")
         return False
-    
+
     return run_command(
         f"{sys.executable} -m pip install -r requirements.txt",
         "Installing Python dependencies"
@@ -73,10 +73,10 @@ def create_directories():
         'data/processed',
         'models'
     ]
-    
+
     for directory in directories:
         Path(directory).mkdir(parents=True, exist_ok=True)
-    
+
     print("✅ Created necessary directories")
     return True
 
@@ -84,19 +84,19 @@ def main():
     """Main setup function"""
     print("🚀 Setting up Education AI Dataset & AITA System")
     print("=" * 50)
-    
+
     # Check Python version
     if not check_python_version():
         sys.exit(1)
-    
+
     # Check syntax
     if not check_syntax():
         print("\n⚠️  Syntax errors found. Please fix them before continuing.")
         sys.exit(1)
-    
+
     # Create directories
     create_directories()
-    
+
     # Install dependencies
     print("\n📦 Installing dependencies...")
     if install_dependencies():
@@ -105,7 +105,7 @@ def main():
         print("❌ Failed to install some dependencies")
         print("   You may need to install them manually:")
         print("   pip install -r requirements.txt")
-    
+
     print("\n" + "=" * 50)
     print("🎉 Setup completed!")
     print("\n📋 Next steps:")
@@ -117,7 +117,7 @@ def main():
     print("   streamlit run teacher_dashboard_main.py")
     print("\n4. Run the student frontend:")
     print("   streamlit run student_frontend_streamlit.py")
-    
+
     print("\n⚠️  Note: You'll need to provide model weights and adapters separately")
 
 if __name__ == "__main__":

@@ -72,7 +72,7 @@ class ConnectionManager:
         await websocket.accept()
         self.active_connections[teacher_id] = websocket
         logger.info(f"Teacher {teacher_id} connected to notification system")
-        
+
         # Send pending notifications
         if teacher_id in self.pending_notifications:
             for notification in self.pending_notifications[teacher_id]:
@@ -105,7 +105,7 @@ class ConnectionManager:
     async def broadcast_notification(self, notification: Notification):
         """Broadcast a notification to all connected teachers"""
         self.notification_history.append(notification)
-        
+
         for teacher_id in self.active_connections.copy():
             await self.send_notification_to_teacher(teacher_id, notification)
 
@@ -156,7 +156,7 @@ async def websocket_endpoint(websocket: WebSocket, teacher_id: str):
             # Keep connection alive and handle incoming messages
             data = await websocket.receive_text()
             message = json.loads(data)
-            
+
             # Handle different message types
             if message.get("type") == "subscribe":
                 student_id = message.get("student_id")
@@ -166,7 +166,7 @@ async def websocket_endpoint(websocket: WebSocket, teacher_id: str):
                         "type": "subscription_confirmed",
                         "student_id": student_id
                     }))
-            
+
             elif message.get("type") == "unsubscribe":
                 student_id = message.get("student_id")
                 if student_id:
@@ -175,7 +175,7 @@ async def websocket_endpoint(websocket: WebSocket, teacher_id: str):
                         "type": "unsubscription_confirmed",
                         "student_id": student_id
                     }))
-            
+
             elif message.get("type") == "mark_read":
                 notification_id = message.get("notification_id")
                 # Mark notification as read
@@ -183,7 +183,7 @@ async def websocket_endpoint(websocket: WebSocket, teacher_id: str):
                     if notification.id == notification_id:
                         notification.read = True
                         break
-                
+
     except WebSocketDisconnect:
         manager.disconnect(teacher_id)
 
@@ -202,9 +202,9 @@ async def create_help_request(help_request: HelpRequest):
         action_required=True,
         action_url=f"/teacher/session/{help_request.session_id}"
     )
-    
+
     await manager.send_to_student_teachers(help_request.student_id, notification)
-    
+
     return {"success": True, "notification_id": notification.id}
 
 @notification_app.post("/api/notifications/misconception")
@@ -216,7 +216,7 @@ async def create_misconception_alert(
 ):
     """Create a misconception detection notification"""
     priority = NotificationPriority.HIGH if confidence > 0.9 else NotificationPriority.MEDIUM
-    
+
     notification = Notification(
         type=NotificationType.MISCONCEPTION_DETECTED,
         priority=priority,
@@ -228,9 +228,9 @@ async def create_misconception_alert(
         action_required=True,
         action_url=f"/teacher/session/{session_id}/misconceptions"
     )
-    
+
     await manager.send_to_student_teachers(student_id, notification)
-    
+
     return {"success": True, "notification_id": notification.id}
 
 @notification_app.post("/api/notifications/student-stuck")
@@ -252,9 +252,9 @@ async def create_student_stuck_alert(
         action_required=True,
         action_url=f"/teacher/session/{session_id}"
     )
-    
+
     await manager.send_to_student_teachers(student_id, notification)
-    
+
     return {"success": True, "notification_id": notification.id}
 
 @notification_app.post("/api/notifications/inappropriate-content")
@@ -276,9 +276,9 @@ async def create_inappropriate_content_alert(
         action_required=True,
         action_url=f"/teacher/session/{session_id}/moderation"
     )
-    
+
     await manager.send_to_student_teachers(student_id, notification)
-    
+
     return {"success": True, "notification_id": notification.id}
 
 @notification_app.post("/api/notifications/achievement")
@@ -297,9 +297,9 @@ async def create_achievement_notification(
         metadata={"achievement": achievement_name, "description": achievement_description},
         action_required=False
     )
-    
+
     await manager.send_to_student_teachers(student_id, notification)
-    
+
     return {"success": True, "notification_id": notification.id}
 
 @notification_app.post("/api/notifications/system")
@@ -318,9 +318,9 @@ async def create_system_notification(
         action_required=action_url is not None,
         action_url=action_url
     )
-    
+
     await manager.broadcast_notification(notification)
-    
+
     return {"success": True, "notification_id": notification.id}
 
 # Get notification history
@@ -329,16 +329,16 @@ async def get_notification_history(teacher_id: str, limit: int = 50):
     """Get notification history for a teacher"""
     # Filter notifications relevant to the teacher
     relevant_notifications = []
-    
+
     for notification in manager.notification_history[-limit:]:
         # Include system notifications and notifications for students the teacher monitors
         if (notification.type == NotificationType.SYSTEM_ALERT or
             notification.teacher_id == teacher_id or
-            (notification.student_id and 
+            (notification.student_id and
              teacher_id in manager.teacher_subscriptions and
              notification.student_id in manager.teacher_subscriptions[teacher_id])):
             relevant_notifications.append(notification.dict())
-    
+
     return {"notifications": relevant_notifications}
 
 # Get notification statistics
@@ -347,14 +347,14 @@ async def get_notification_stats():
     """Get notification system statistics"""
     total_notifications = len(manager.notification_history)
     unread_count = sum(1 for n in manager.notification_history if not n.read)
-    
+
     type_counts = {}
     priority_counts = {}
-    
+
     for notification in manager.notification_history:
         type_counts[notification.type] = type_counts.get(notification.type, 0) + 1
         priority_counts[notification.priority] = priority_counts.get(notification.priority, 0) + 1
-    
+
     return {
         "total_notifications": total_notifications,
         "unread_count": unread_count,

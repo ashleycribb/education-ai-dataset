@@ -25,7 +25,7 @@ You can also start individual services:
 ```bash
 # API Services
 python api_integration_hub.py          # Port 8001
-python realtime_notifications.py       # Port 8002  
+python realtime_notifications.py       # Port 8002
 python quiz_generator.py              # Port 8003
 python aita_interaction_service.py    # Port 8000
 
@@ -245,7 +245,7 @@ results = requests.post(
 
 #### Badge Types
 - **Learning**: Academic achievement badges
-- **Engagement**: Participation and consistency badges  
+- **Engagement**: Participation and consistency badges
 - **Collaboration**: Teamwork and helping others badges
 - **Achievement**: Performance milestone badges
 - **Special**: Rare accomplishment badges
@@ -393,7 +393,7 @@ const systemWs = new WebSocket('ws://localhost:8002/ws/system');
 // Handle different notification types
 teacherWs.onmessage = function(event) {
     const notification = JSON.parse(event.data);
-    
+
     switch(notification.type) {
         case 'help_request':
             showHelpAlert(notification);

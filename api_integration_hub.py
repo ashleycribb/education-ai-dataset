@@ -26,7 +26,7 @@ class APIKeyAuth:
             "demo_key_123": {"name": "Demo Integration", "permissions": ["read", "write"]},
             "lms_key_456": {"name": "LMS Integration", "permissions": ["read", "write", "admin"]},
         }
-    
+
     def verify_api_key(self, credentials: HTTPAuthorizationCredentials = Depends(security)):
         api_key = credentials.credentials
         if api_key not in self.valid_api_keys:
@@ -110,9 +110,9 @@ async def create_student(student: StudentProfile, auth_data: dict = Depends(auth
     """Create a new student profile"""
     if student.student_id in students_db:
         raise HTTPException(status_code=409, detail="Student already exists")
-    
+
     students_db[student.student_id] = student.dict()
-    
+
     return APIResponse(
         success=True,
         message="Student profile created successfully",
@@ -124,7 +124,7 @@ async def get_student(student_id: str, auth_data: dict = Depends(auth.verify_api
     """Get student profile by ID"""
     if student_id not in students_db:
         raise HTTPException(status_code=404, detail="Student not found")
-    
+
     return APIResponse(
         success=True,
         message="Student profile retrieved",
@@ -146,9 +146,9 @@ async def create_session(session: SessionData, auth_data: dict = Depends(auth.ve
     """Create a new learning session"""
     if session.session_id in sessions_db:
         raise HTTPException(status_code=409, detail="Session already exists")
-    
+
     sessions_db[session.session_id] = session.dict()
-    
+
     return APIResponse(
         success=True,
         message="Session created successfully",
@@ -160,7 +160,7 @@ async def get_session(session_id: str, auth_data: dict = Depends(auth.verify_api
     """Get session data by ID"""
     if session_id not in sessions_db:
         raise HTTPException(status_code=404, detail="Session not found")
-    
+
     return APIResponse(
         success=True,
         message="Session data retrieved",
@@ -172,9 +172,9 @@ async def end_session(session_id: str, auth_data: dict = Depends(auth.verify_api
     """End a learning session"""
     if session_id not in sessions_db:
         raise HTTPException(status_code=404, detail="Session not found")
-    
+
     sessions_db[session_id]["end_time"] = datetime.datetime.now().isoformat()
-    
+
     return APIResponse(
         success=True,
         message="Session ended successfully",
@@ -186,11 +186,11 @@ async def end_session(session_id: str, auth_data: dict = Depends(auth.verify_api
 async def log_interaction(interaction: InteractionEvent, auth_data: dict = Depends(auth.verify_api_key)):
     """Log a student interaction event"""
     interactions_db.append(interaction.dict())
-    
+
     # Update session interaction count
     if interaction.session_id in sessions_db:
         sessions_db[interaction.session_id]["interaction_count"] += 1
-    
+
     return APIResponse(
         success=True,
         message="Interaction logged successfully",
@@ -201,7 +201,7 @@ async def log_interaction(interaction: InteractionEvent, auth_data: dict = Depen
 async def get_session_interactions(session_id: str, auth_data: dict = Depends(auth.verify_api_key)):
     """Get all interactions for a session"""
     session_interactions = [i for i in interactions_db if i["session_id"] == session_id]
-    
+
     return APIResponse(
         success=True,
         message="Session interactions retrieved",
@@ -212,7 +212,7 @@ async def get_session_interactions(session_id: str, auth_data: dict = Depends(au
 async def get_student_interactions(student_id: str, limit: int = 100, auth_data: dict = Depends(auth.verify_api_key)):
     """Get interactions for a student"""
     student_interactions = [i for i in interactions_db if i["student_id"] == student_id][-limit:]
-    
+
     return APIResponse(
         success=True,
         message="Student interactions retrieved",
@@ -229,18 +229,18 @@ async def lti_launch(launch_request: LTILaunchRequest, auth_data: dict = Depends
         name=f"Student_{launch_request.user_id}",
         learning_preferences={"lti_context": launch_request.context_id}
     )
-    
+
     students_db[student_profile.student_id] = student_profile.dict()
-    
+
     # Create new session
     session = SessionData(
         session_id=str(uuid.uuid4()),
         student_id=launch_request.user_id,
         start_time=datetime.datetime.now()
     )
-    
+
     sessions_db[session.session_id] = session.dict()
-    
+
     return APIResponse(
         success=True,
         message="LTI launch successful",
@@ -270,7 +270,7 @@ async def subscribe_webhook(
         "secret": secret,
         "created_at": datetime.datetime.now().isoformat()
     })
-    
+
     return APIResponse(
         success=True,
         message="Webhook subscription created",
@@ -281,13 +281,13 @@ async def subscribe_webhook(
 async def trigger_webhook(event: WebhookEvent, auth_data: dict = Depends(auth.verify_api_key)):
     """Trigger webhook event (for testing)"""
     webhooks_db.append(event.dict())
-    
+
     # In production, this would send HTTP requests to subscribed URLs
     triggered_webhooks = []
     for subscriber in webhook_subscribers:
         if event.event_type in subscriber["events"]:
             triggered_webhooks.append(subscriber["url"])
-    
+
     return APIResponse(
         success=True,
         message="Webhook event triggered",
@@ -303,7 +303,7 @@ async def get_student_analytics(student_id: str, auth_data: dict = Depends(auth.
     """Get analytics summary for a student"""
     student_sessions = [s for s in sessions_db.values() if s["student_id"] == student_id]
     student_interactions = [i for i in interactions_db if i["student_id"] == student_id]
-    
+
     analytics = {
         "student_id": student_id,
         "total_sessions": len(student_sessions),
@@ -316,7 +316,7 @@ async def get_student_analytics(student_id: str, auth_data: dict = Depends(auth.
             "objectives_met": list(set([obj for s in student_sessions for obj in s.get("learning_objectives_met", [])]))
         }
     }
-    
+
     return APIResponse(
         success=True,
         message="Student analytics retrieved",
@@ -375,7 +375,7 @@ async def get_api_documentation():
             "GET /api/v1/docs/endpoints - API documentation"
         ]
     }
-    
+
     return APIResponse(
         success=True,
         message="API documentation retrieved",

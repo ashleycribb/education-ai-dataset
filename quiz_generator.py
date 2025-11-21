@@ -99,7 +99,7 @@ class QuizGenerator:
                 "{concept} can be defined as {blank}."
             ]
         }
-        
+
         # Sample content by subject
         self.content_database = {
             "mathematics": {
@@ -130,14 +130,14 @@ class QuizGenerator:
                 ]
             }
         }
-    
+
     def generate_quiz(self, request: QuizGenerationRequest) -> Quiz:
         """Generate a quiz based on the request parameters"""
         questions = []
-        
+
         # Determine subject from topic
         subject = self._identify_subject(request.topic)
-        
+
         for i in range(request.question_count):
             question_type = random.choice(request.question_types)
             question = self._generate_question(
@@ -149,9 +149,9 @@ class QuizGenerator:
                 context=request.conversation_context
             )
             questions.append(question)
-        
+
         total_points = sum(q.points for q in questions)
-        
+
         quiz = Quiz(
             title=f"Quiz: {request.topic.title()}",
             description=f"Assessment covering {', '.join(request.learning_objectives)}",
@@ -161,17 +161,17 @@ class QuizGenerator:
             subject=subject,
             grade_level=request.grade_level
         )
-        
+
         return quiz
-    
+
     def _identify_subject(self, topic: str) -> str:
         """Identify subject based on topic keywords"""
         topic_lower = topic.lower()
-        
+
         math_keywords = ["math", "algebra", "geometry", "calculus", "equation", "number"]
         science_keywords = ["science", "biology", "chemistry", "physics", "experiment"]
         english_keywords = ["english", "literature", "writing", "reading", "grammar"]
-        
+
         if any(keyword in topic_lower for keyword in math_keywords):
             return "mathematics"
         elif any(keyword in topic_lower for keyword in science_keywords):
@@ -180,12 +180,12 @@ class QuizGenerator:
             return "english"
         else:
             return "general"
-    
-    def _generate_question(self, question_type: QuestionType, topic: str, 
+
+    def _generate_question(self, question_type: QuestionType, topic: str,
                           learning_objectives: List[str], difficulty: DifficultyLevel,
                           subject: str, context: Optional[str] = None) -> QuizQuestion:
         """Generate a single question"""
-        
+
         if question_type == QuestionType.MULTIPLE_CHOICE:
             return self._generate_multiple_choice(topic, learning_objectives[0], difficulty, subject)
         elif question_type == QuestionType.TRUE_FALSE:
@@ -197,17 +197,17 @@ class QuizGenerator:
         else:
             # Default to multiple choice
             return self._generate_multiple_choice(topic, learning_objectives[0], difficulty, subject)
-    
-    def _generate_multiple_choice(self, topic: str, objective: str, 
+
+    def _generate_multiple_choice(self, topic: str, objective: str,
                                  difficulty: DifficultyLevel, subject: str) -> QuizQuestion:
         """Generate a multiple choice question"""
-        
+
         if subject in self.content_database:
             concepts = self.content_database[subject]["concepts"]
             concept = random.choice(concepts)
         else:
             concept = topic
-        
+
         # Generate question based on difficulty
         if difficulty == DifficultyLevel.EASY:
             question = f"What is {concept}?"
@@ -236,11 +236,11 @@ class QuizGenerator:
                 "It only applies in basic scenarios",
                 "It has been replaced by newer concepts"
             ]
-        
+
         # Shuffle options
         random.shuffle(options)
         correct_index = options.index(correct)
-        
+
         return QuizQuestion(
             type=QuestionType.MULTIPLE_CHOICE,
             difficulty=difficulty,
@@ -252,20 +252,20 @@ class QuizGenerator:
             learning_objective=objective,
             points=1 if difficulty == DifficultyLevel.EASY else 2 if difficulty == DifficultyLevel.MEDIUM else 3
         )
-    
-    def _generate_true_false(self, topic: str, objective: str, 
+
+    def _generate_true_false(self, topic: str, objective: str,
                            difficulty: DifficultyLevel, subject: str) -> QuizQuestion:
         """Generate a true/false question"""
-        
+
         statements = [
             f"{topic.title()} is an important concept in {subject}",
             f"Understanding {topic} helps achieve {objective}",
             f"{topic.title()} requires no prior knowledge to master"
         ]
-        
+
         statement = random.choice(statements)
         is_true = statement != statements[-1]  # Last statement is false
-        
+
         return QuizQuestion(
             type=QuestionType.TRUE_FALSE,
             difficulty=difficulty,
@@ -276,13 +276,13 @@ class QuizGenerator:
             learning_objective=objective,
             points=1
         )
-    
-    def _generate_short_answer(self, topic: str, objective: str, 
+
+    def _generate_short_answer(self, topic: str, objective: str,
                              difficulty: DifficultyLevel, subject: str) -> QuizQuestion:
         """Generate a short answer question"""
-        
+
         question = f"Explain how {topic} relates to {objective}. Provide specific examples."
-        
+
         return QuizQuestion(
             type=QuestionType.SHORT_ANSWER,
             difficulty=difficulty,
@@ -293,14 +293,14 @@ class QuizGenerator:
             learning_objective=objective,
             points=3 if difficulty == DifficultyLevel.HARD else 2
         )
-    
-    def _generate_fill_in_blank(self, topic: str, objective: str, 
+
+    def _generate_fill_in_blank(self, topic: str, objective: str,
                               difficulty: DifficultyLevel, subject: str) -> QuizQuestion:
         """Generate a fill-in-the-blank question"""
-        
+
         question = f"The concept of {topic} is important because it helps students _______ in {subject}."
         correct_answer = "understand fundamental principles"
-        
+
         return QuizQuestion(
             type=QuestionType.FILL_IN_BLANK,
             difficulty=difficulty,
@@ -311,30 +311,30 @@ class QuizGenerator:
             learning_objective=objective,
             points=2
         )
-    
+
     def grade_quiz(self, quiz: Quiz, answers: Dict[str, Any]) -> Dict[str, Any]:
         """Grade a quiz attempt"""
         total_points = 0
         earned_points = 0
         question_results = {}
-        
+
         for question in quiz.questions:
             total_points += question.points
             student_answer = answers.get(question.id, "")
-            
+
             is_correct = self._check_answer(question, student_answer)
             points_earned = question.points if is_correct else 0
             earned_points += points_earned
-            
+
             question_results[question.id] = {
                 "correct": is_correct,
                 "points_earned": points_earned,
                 "correct_answer": question.correct_answer,
                 "student_answer": student_answer
             }
-        
+
         percentage = (earned_points / total_points * 100) if total_points > 0 else 0
-        
+
         return {
             "total_points": total_points,
             "earned_points": earned_points,
@@ -342,7 +342,7 @@ class QuizGenerator:
             "question_results": question_results,
             "grade": self._calculate_letter_grade(percentage)
         }
-    
+
     def _check_answer(self, question: QuizQuestion, student_answer: str) -> bool:
         """Check if a student's answer is correct"""
         if question.type == QuestionType.MULTIPLE_CHOICE:
@@ -360,7 +360,7 @@ class QuizGenerator:
             return len(student_answer.strip()) > 10  # Basic length check
         else:
             return False
-    
+
     def _calculate_letter_grade(self, percentage: float) -> str:
         """Calculate letter grade from percentage"""
         if percentage >= 90:
@@ -421,15 +421,15 @@ async def start_quiz_attempt(quiz_id: str, student_id: str):
     """Start a new quiz attempt"""
     if quiz_id not in quizzes_db:
         raise HTTPException(status_code=404, detail="Quiz not found")
-    
+
     attempt = QuizAttempt(
         quiz_id=quiz_id,
         student_id=student_id,
         answers={}
     )
-    
+
     attempts_db[attempt.id] = attempt
-    
+
     return {"attempt_id": attempt.id, "message": "Quiz attempt started"}
 
 @quiz_app.post("/api/attempts/{attempt_id}/submit")
@@ -437,21 +437,21 @@ async def submit_quiz_attempt(attempt_id: str, answers: Dict[str, Any]):
     """Submit answers for a quiz attempt"""
     if attempt_id not in attempts_db:
         raise HTTPException(status_code=404, detail="Quiz attempt not found")
-    
+
     attempt = attempts_db[attempt_id]
     quiz = quizzes_db[attempt.quiz_id]
-    
+
     # Update attempt with answers
     attempt.answers = answers
     attempt.completed_at = datetime.datetime.now()
     attempt.time_taken = int((attempt.completed_at - attempt.started_at).total_seconds())
-    
+
     # Grade the quiz
     grading_result = generator.grade_quiz(quiz, answers)
-    
+
     attempt.score = grading_result["earned_points"]
     attempt.percentage = grading_result["percentage"]
-    
+
     return {
         "attempt_id": attempt_id,
         "results": grading_result,
@@ -463,7 +463,7 @@ async def get_quiz_attempt(attempt_id: str):
     """Get quiz attempt details"""
     if attempt_id not in attempts_db:
         raise HTTPException(status_code=404, detail="Quiz attempt not found")
-    
+
     return attempts_db[attempt_id]
 
 @quiz_app.get("/api/analytics/quiz/{quiz_id}")
@@ -471,14 +471,14 @@ async def get_quiz_analytics(quiz_id: str):
     """Get analytics for a specific quiz"""
     if quiz_id not in quizzes_db:
         raise HTTPException(status_code=404, detail="Quiz not found")
-    
+
     quiz_attempts = [a for a in attempts_db.values() if a.quiz_id == quiz_id and a.completed_at]
-    
+
     if not quiz_attempts:
         return {"message": "No completed attempts found"}
-    
+
     scores = [a.percentage for a in quiz_attempts if a.percentage is not None]
-    
+
     analytics = {
         "quiz_id": quiz_id,
         "total_attempts": len(quiz_attempts),
@@ -487,19 +487,19 @@ async def get_quiz_analytics(quiz_id: str):
         "lowest_score": min(scores) if scores else 0,
         "completion_rate": len(quiz_attempts) / len([a for a in attempts_db.values() if a.quiz_id == quiz_id]) * 100
     }
-    
+
     return analytics
 
 @quiz_app.get("/api/analytics/student/{student_id}")
 async def get_student_quiz_analytics(student_id: str):
     """Get quiz analytics for a specific student"""
     student_attempts = [a for a in attempts_db.values() if a.student_id == student_id and a.completed_at]
-    
+
     if not student_attempts:
         return {"message": "No completed attempts found for this student"}
-    
+
     scores = [a.percentage for a in student_attempts if a.percentage is not None]
-    
+
     analytics = {
         "student_id": student_id,
         "total_quizzes_taken": len(student_attempts),
@@ -507,7 +507,7 @@ async def get_student_quiz_analytics(student_id: str):
         "best_score": max(scores) if scores else 0,
         "recent_attempts": sorted(student_attempts, key=lambda x: x.started_at, reverse=True)[:5]
     }
-    
+
     return analytics
 
 @quiz_app.get("/health")
