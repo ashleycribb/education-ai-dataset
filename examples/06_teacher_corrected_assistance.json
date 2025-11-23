@@ -1,0 +1,46 @@
+[
+  {
+    "id": "e057d2a3-4b19-4f10-ab3a-81d1cb22c9a0",
+    "actor": {
+      "objectType": "Agent",
+      "name": "AI Teacher's Assistant",
+      "account": { "homePage": "http://example.com/ai-assistant", "name": "ai-assistant-001" }
+    },
+    "verb": {
+      "id": "https://w3id.org/xapi/ai/verbs/gave-feedback",
+      "display": { "en-US": "gave feedback" }
+    },
+    "object": {
+      "objectType": "Activity",
+      "id": "http://example.com/activities/quiz-1/question-4",
+      "definition": { "name": { "en-US": "Question 4: What is a variable?" } }
+    },
+    "context": {
+      "extensions": {
+        "https://w3id.org/xapi/ai/extensions/prompt": "I'm not sure.",
+        "https://w3id.org/xapi/ai/extensions/assistance-content": "It's a container for a value."
+      }
+    }
+  },
+  {
+    "actor": {
+      "objectType": "Agent",
+      "name": "Dr. Evelyn Reed",
+      "mbox": "mailto:evelyn.reed@example.com"
+    },
+    "verb": {
+      "id": "https://w3id.org/xapi/ai/verbs/corrected-assistance",
+      "display": { "en-US": "corrected assistance" }
+    },
+    "object": {
+      "objectType": "StatementRef",
+      "id": "e057d2a3-4b19-4f10-ab3a-81d1cb22c9a0"
+    },
+    "context": {
+      "extensions": {
+        "https://w3id.org/xapi/ai/extensions/teacher-rating": 3,
+        "https://w3id.org/xapi/ai/extensions/teacher-correction": "This is a good start, but a better analogy would be to call it a 'labeled box' or a 'named storage location' to emphasize that it has a name and a place in memory."
+      }
+    }
+  }
+]
