@@ -1,0 +1,20 @@
+actor:
+  objectType: Agent
+  name: AI Teacher's Assistant
+  account:
+    homePage: http://example.com/ai-assistant
+    name: ai-assistant-001
+verb:
+  id: https://w3id.org/xapi/ai/verbs/provided-hint
+  display:
+    en-US: provided hint
+object:
+  objectType: Activity
+  id: http://example.com/activities/coding-exercise-1
+  definition:
+    name:
+      en-US: "Coding Exercise: Bubble Sort"
+context:
+  extensions:
+    https://w3id.org/xapi/ai/extensions/prompt: User has been stuck on the same line of code for 3 minutes.
+    https://w3id.org/xapi/ai/extensions/assistance-content: "It looks like you're having trouble with the inner loop. Remember how we discussed nested loops work?"

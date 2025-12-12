@@ -1,0 +1,31 @@
+{
+  "actor": {
+    "objectType": "Agent",
+    "name": "AI Teacher's Assistant",
+    "account": {
+      "homePage": "http://example.com/ai-assistant",
+      "name": "ai-assistant-001"
+    }
+  },
+  "verb": {
+    "id": "https://w3id.org/xapi/ai/verbs/gave-feedback",
+    "display": {
+      "en-US": "gave feedback"
+    }
+  },
+  "object": {
+    "objectType": "Activity",
+    "id": "http://example.com/activities/quiz-1/question-2",
+    "definition": {
+      "name": {
+        "en-US": "Question 2: Explain Big O notation."
+      }
+    }
+  },
+  "context": {
+    "extensions": {
+      "https://w3id.org/xapi/ai/extensions/prompt": "I think Big O notation is about the number of lines of code.",
+      "https://w3id.org/xapi/ai/extensions/assistance-content": "That's a common misconception. It's not about the lines of code, but rather how the runtime of an algorithm grows as the input size grows."
+    }
+  }
+}

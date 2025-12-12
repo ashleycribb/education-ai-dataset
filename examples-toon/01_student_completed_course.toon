@@ -1,0 +1,25 @@
+actor:
+  objectType: Agent
+  name: Sally Student
+  mbox: mailto:sally.student@example.com
+verb:
+  id: http://adlnet.gov/expapi/verbs/completed
+  display:
+    en-US: completed
+object:
+  objectType: Activity
+  id: http://example.com/courses/cs-101
+  definition:
+    name:
+      en-US: Introduction to Computer Science
+    description:
+      en-US: A foundational course on the principles of computer science.
+    type: http://adlnet.gov/expapi/activities/course
+result:
+  completion: true
+  success: true
+  score:
+    scaled: 0.95
+    raw: 95
+    min: 0
+    max: 100

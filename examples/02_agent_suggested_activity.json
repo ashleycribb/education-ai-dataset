@@ -1,0 +1,35 @@
+{
+  "actor": {
+    "objectType": "Agent",
+    "name": "AI Tutor",
+    "account": {
+      "homePage": "http://example.com/ai-tutor",
+      "name": "ai-tutor-001"
+    }
+  },
+  "verb": {
+    "id": "https://w3id.org/xapi/ai/verbs/suggested",
+    "display": {
+      "en-US": "suggested"
+    }
+  },
+  "object": {
+    "objectType": "Activity",
+    "id": "http://example.com/activities/quiz-1",
+    "definition": {
+      "name": {
+        "en-US": "Quiz 1: Basic Algorithms"
+      },
+      "type": "http://adlnet.gov/expapi/activities/assessment"
+    }
+  },
+  "context": {
+    "extensions": {
+      "https://w3id.org/xapi/ai/extensions/recipient": {
+        "objectType": "Agent",
+        "name": "Sally Student",
+        "mbox": "mailto:sally.student@example.com"
+      }
+    }
+  }
+}
