@@ -9,6 +9,7 @@ import uvicorn
 from datetime import datetime
 import os
 import json
+import time
 
 # --- Import new utility ---
 from model_loader_utils import load_model_tokenizer_with_adapter, DefaultLogger
@@ -48,6 +49,15 @@ class InteractionRequest(BaseModel):
     aita_persona_id: str = "default_phi3_base"
     user_utterance: str
     conversation_history: List[Dict[str, str]] = []
+    subject: Optional[str] = None
+    current_item_id: Optional[str] = None
+    current_item_title: Optional[str] = None
+    current_item_text_snippet: Optional[str] = None
+    target_learning_objectives: Optional[List[Dict[str,str]]] = None
+
+class ActivityStartRequest(BaseModel):
+    user_id: str
+    aita_persona_id: str = "default_phi3_base"
     subject: Optional[str] = None
     current_item_id: Optional[str] = None
     current_item_title: Optional[str] = None
@@ -177,12 +187,127 @@ async def get_user_profile(user_id: str):
     return user_profile
 
 # --- 6. /interact Endpoint (Uses refactored model loader) ---
-@app.post("/interact", response_model=InteractionResponse)
-async def interact_with_aita(request: InteractionRequest):
+@app.post("/start_ai_activity", response_model=InteractionResponse)
+async def start_ai_activity(request: ActivityStartRequest):
+    session_id = uuid.uuid4().hex
+    timestamp_utc = datetime.utcnow().isoformat() + "Z"
+
+    # Log the start of the activity as an xAPI statement
+    log_xapi_statement(
+        create_interaction_xapi_statement(
+            actor_name="ServiceUser",
+            actor_account_name=request.user_id,
+            verb_id="http://adlnet.gov/expapi/verbs/initialized",
+            verb_display="initialized an AI activity",
+            object_activity_id=f"http://example.com/aita_service/{session_id}",
+            object_activity_name="AITA Service Interaction Session",
+            object_activity_description=f"User '{request.user_id}' started an activity with '{request.aita_persona_id}'.",
+            session_id=session_id,
+            aita_persona=request.aita_persona_id,
+        ),
+        XAPI_LOG_FILE_PATH,
+        service_logger,
+    )
+
+    return InteractionResponse(
+        session_id=session_id,
+        aita_response="Activity started.",
+        debug_info={"initial_request": request.model_dump()},
+    )
+
+
+@app.post("/interact_ai_activity", response_model=InteractionResponse)
+async def interact_ai_activity(request: InteractionRequest):
     current_session_id = request.session_id if request.session_id else uuid.uuid4().hex
     timestamp_utc = datetime.utcnow().isoformat() + "Z"
 
     effective_aita_persona_id = request.aita_persona_id
+    user_profile = USER_PROFILES_DB.get(request.user_id)
+    if user_profile and user_profile.preferred_aita_persona_id:
+        effective_aita_persona_id = user_profile.preferred_aita_persona_id
+        service_logger.info(f"Using user's preferred AITA: {effective_aita_persona_id}")
+
+    # Use the refactored function to get model, tokenizer, device
+    current_model, current_tokenizer, current_device = get_model_and_tokenizer_for_persona(effective_aita_persona_id, BASE_MODEL_ID)
+
+    if not current_model or not current_tokenizer or not current_device: # Check all three
+        service_logger.error(f"Model resources for persona '{effective_aita_persona_id}' are not available (utility returned None). Check startup & persona loading logs.")
+        raise HTTPException(status_code=503, detail=f"Model resources for persona '{effective_aita_persona_id}' are not available.")
+
+    lms_context = get_simulated_lms_context(request.user_id, request.subject, request.current_item_id)
+    grade_level_info = f" The student is in grade {user_profile.grade_level}." if user_profile and user_profile.grade_level else ""
+    passage_title = lms_context.get("current_passage_title", lms_context.get("current_item_title", "the current topic")) if lms_context else "the current topic"
+    passage_snippet = lms_context.get("current_passage_text_snippet", lms_context.get("current_item_text_snippet", "a relevant educational activity")) if lms_context else "a relevant educational activity"
+    lo_list = lms_context.get("target_learning_objectives_for_activity", []) if lms_context else []
+    primary_lo = lo_list[0] if lo_list and isinstance(lo_list, list) and len(lo_list) > 0 else {}
+    lo_desc = primary_lo.get("description", "the learning goal")
+    lo_id_log = primary_lo.get("lo_id", "UNKNOWN_LO")
+    teacher_notes_log = lms_context.get("teacher_notes_for_student_on_lo", "") if lms_context else ""
+    passage_id_log = lms_context.get("current_passage_id", lms_context.get("current_item_id", "unknown_item")) if lms_context else "unknown_item"
+
+    system_prompt = f"You are {effective_aita_persona_id}, a helpful AI Tutor.{grade_level_info} You are discussing '{passage_title}' related to the learning objective: '{lo_desc}'. Passage snippet: \"{passage_snippet}\". {f'Teacher note: \"{teacher_notes_log}\" ' if teacher_notes_log else ''}Respond clearly, concisely, and age-appropriately. Guide the student; don't just give answers."
+
+    mod_input_results = moderation_service.check_text(request.user_utterance) # Ensure moderation_service is initialized
+    if not mod_input_results["is_safe"]:
+        aita_final_response = "I'm sorry, I can't process that request due to content policy. Let's focus on our learning task."
+        # Log xAPI (simplified for brevity here, full structure in client)
+        log_xapi_statement({"error": "unsafe input", "user_id": request.user_id, "input": request.user_utterance}, XAPI_LOG_FILE_PATH, service_logger)
+        return InteractionResponse(session_id=current_session_id, aita_response=aita_final_response, debug_info={"input_moderation_triggered": True})
+
+    messages = [{"role": "system", "content": system_prompt}]
+    messages.extend(request.conversation_history)
+    messages.append({"role": "user", "content": request.user_utterance})
+
+    try:
+        prompt_text = current_tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+        inputs = current_tokenizer(prompt_text, return_tensors="pt", add_special_tokens=True).to(current_device)
+        input_ids_length = inputs.input_ids.shape[1]
+
+        start_time = time.time()
+        with torch.no_grad():
+            generated_outputs = current_model.generate(
+                inputs.input_ids, max_new_tokens=300, eos_token_id=current_tokenizer.eos_token_id,
+                pad_token_id=current_tokenizer.pad_token_id, do_sample=True, temperature=0.7, top_p=0.9
+            )
+        duration_s = time.time() - start_time
+
+        response_ids = generated_outputs[0][input_ids_length:]
+        aita_raw_response = current_tokenizer.decode(response_ids, skip_special_tokens=True).strip()
+
+        mod_output_results = moderation_service.check_text(aita_raw_response)
+        aita_final_response = aita_raw_response
+        if not mod_output_results["is_safe"]:
+            aita_final_response = "I may have generated a response that isn't quite right. Let's try a different approach."
+
+        xapi_log_data = {
+            "actor_name": "ServiceUser", "actor_account_name": request.user_id,
+            "verb_id": "http://adlnet.gov/expapi/verbs/interacted", "verb_display": "interacted with AITA Service",
+            "object_activity_id": f"http://example.com/aita_service/{current_session_id}/turn_{uuid.uuid4().hex[:8]}",
+            "object_activity_name": "AITA Service Interaction Turn",
+            "object_activity_description": f"User '{request.user_id}' interacted with '{effective_aita_persona_id}' on content '{passage_title}'. LO: {lo_id_log}.",
+            "session_id": current_session_id, "aita_persona": effective_aita_persona_id,
+            "result_response": aita_final_response, "result_duration_seconds": duration_s,
+            "result_extensions": {"input_moderation_details": mod_input_results, "output_moderation_details": mod_output_results},
+            "context_parent_activity_id": f"http://example.com/content/{passage_id_log}",
+            "context_extensions": {
+                "learning_objective_active": lo_id_log, "full_prompt_to_llm": prompt_text,
+                "user_utterance_raw": request.user_utterance, "aita_response_raw": aita_raw_response,
+                "pedagogical_notes": ["Service Placeholder: Note 1", "Service Placeholder: Note 2"], # Placeholder reasoner fields
+                "aita_turn_narrative_rationale": "Service Placeholder: Simulated rationale for this turn."
+            }
+        }
+        log_xapi_statement(create_interaction_xapi_statement(**xapi_log_data), XAPI_LOG_FILE_PATH, service_logger)
+
+        return InteractionResponse(
+            session_id=current_session_id, aita_response=aita_final_response,
+            debug_info={"model_used": current_model.name_or_path if hasattr(current_model, "name_or_path") else base_model_id,
+                        "aita_persona_resolved": effective_aita_persona_id,
+                        "user_profile_found": bool(user_profile),
+                        "lms_context_found": bool(lms_context)}
+        )
+    except Exception as e:
+        service_logger.error(f"Exception during model interaction: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error during model interaction: {str(e)}")
     user_profile = USER_PROFILES_DB.get(request.user_id)
     if user_profile and user_profile.preferred_aita_persona_id:
         effective_aita_persona_id = user_profile.preferred_aita_persona_id
