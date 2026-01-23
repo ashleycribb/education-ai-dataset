@@ -10,6 +10,17 @@
     <div class="container">
         <nav class="column left-column" id="left-column">
             <h2>Navigation</h2>
+            <ul>
+                <li><a href="{{ url_for('home') }}">Home</a></li>
+                {% if current_user.is_authenticated %}
+                    {% if current_user.is_admin %}
+                        <li><a href="/admin">Admin Panel</a></li>
+                    {% endif %}
+                    <li><a href="{{ url_for('logout') }}">Logout ({{ current_user.username }})</a></li>
+                {% else %}
+                    <li><a href="{{ url_for('login') }}">Login</a></li>
+                {% endif %}
+            </ul>
             {% block navigation %}
             <p>Course navigation will go here.</p>
             {% endblock %}
