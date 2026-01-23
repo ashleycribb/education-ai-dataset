@@ -1,10 +1,11 @@
-from flask import Flask, render_template, url_for, abort
+from flask import Flask, render_template, url_for, abort, request, redirect, flash
 from .config import Config
-from .extensions import db
-from .models import Course, Module, Activity
+from .extensions import db, login_manager
+from .models import Course, Module, Activity, User
+from flask_login import current_user, login_user, logout_user, login_required
 
 # Flask-Admin imports
-from flask_admin import Admin
+from flask_admin import Admin, AdminIndexView
 from flask_admin.contrib.sqla import ModelView
 
 app = Flask(__name__)
@@ -12,17 +13,32 @@ app.config.from_object(Config)
 
 # Initialize extensions
 db.init_app(app)
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 # Flask-Admin setup
-admin = Admin(app, name='LMS Content Admin', template_mode='bootstrap3')
+class SecureModelView(ModelView):
+    def is_accessible(self):
+        return current_user.is_authenticated and current_user.is_admin
+
+    def inaccessible_callback(self, name, **kwargs):
+        # redirect to login page if user doesn't have access
+        return redirect(url_for('login', next=request.url))
+
+class SecureAdminIndexView(AdminIndexView):
+    def is_accessible(self):
+        return current_user.is_authenticated and current_user.is_admin
+
+    def inaccessible_callback(self, name, **kwargs):
+        return redirect(url_for('login', next=request.url))
+
+admin = Admin(app, name='LMS Content Admin', index_view=SecureAdminIndexView())
 # Add administrative views here
 # Define custom ModelViews if needed for more control
-class SecureModelView(ModelView):
-    # pass # Add authentication and authorization logic here later
-    # For now, it's open
-    def is_accessible(self):
-        # Placeholder for admin access control
-        return True
 
 admin.add_view(SecureModelView(Course, db.session))
 admin.add_view(SecureModelView(Module, db.session))
@@ -60,6 +76,27 @@ def get_activities_for_module_helper(module_id_internal):
         return [{"id": act.id, "activity_ext_id": act.activity_ext_id, "title": act.title} for act in module.activities.order_by(Activity.title).all()]
     return []
 
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        user = User.query.filter_by(username=username).first()
+        if user and user.check_password(password):
+            login_user(user)
+            next_page = request.args.get('next')
+            return redirect(next_page or url_for('home'))
+        else:
+            flash('Invalid username or password')
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    logout_user()
+    return redirect(url_for('home'))
 
 @app.route('/')
 def home():
@@ -102,10 +139,17 @@ def create_tables():
 
 def seed_data():
     with app.app_context():
+        # Check if admin user exists
+        if User.query.filter_by(username='admin').first() is None:
+            print("Creating admin user...")
+            admin_user = User(username='admin', is_admin=True)
+            admin_user.set_password('admin')
+            db.session.add(admin_user)
+            db.session.commit()
+            print("Admin user created.")
+
         if Course.query.first() is None: # Check if data already exists
             print("Seeding initial data...")
-            # Create Roles (if you had a Role model and user roles for admin)
-
             # Create Courses
             course1 = Course(course_ext_id="reading_comp_g4", title="4th Grade Reading Comprehension", description="Develop reading comprehension skills for 4th graders.")
             course2 = Course(course_ext_id="fractions_g4", title="Introduction to Fractions (4th Grade)", description="Learn the basics of fractions.")

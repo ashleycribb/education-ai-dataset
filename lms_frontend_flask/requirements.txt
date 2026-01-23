@@ -4,3 +4,5 @@ psycopg2-binary
 Flask-Admin
 python-dotenv
 gunicorn
+Flask-Login
+Werkzeug
