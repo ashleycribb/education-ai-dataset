@@ -7,6 +7,9 @@ import re # For cleaning whitespace
 TARGET_URL = "https://openstax.org/books/concepts-biology/pages/19-1-population-ecology"
 OUTPUT_FILE = "openstax_ecology_content_raw.json"
 
+# Pre-compile regex for cleaning whitespace
+WHITESPACE_REGEX = re.compile(r'\s+')
+
 def fetch_and_parse_openstax_content(url: str):
     """
     Fetches HTML content from the given URL, parses it, and extracts
@@ -94,7 +97,7 @@ def fetch_and_parse_openstax_content(url: str):
             raw_text = p_tag.get_text(separator=' ', strip=True)
 
             # Basic cleaning: replace multiple whitespaces/newlines with a single space
-            cleaned_text = re.sub(r'\s+', ' ', raw_text).strip()
+            cleaned_text = WHITESPACE_REGEX.sub(' ', raw_text).strip()
 
             if cleaned_text: # Only add if there's content
                 paragraph_count_total += 1
@@ -122,7 +125,7 @@ def fetch_and_parse_openstax_content(url: str):
 
         for p_idx, p_tag in enumerate(all_paragraphs):
             raw_text = p_tag.get_text(separator=' ', strip=True)
-            cleaned_text = re.sub(r'\s+', ' ', raw_text).strip()
+            cleaned_text = WHITESPACE_REGEX.sub(' ', raw_text).strip()
             if cleaned_text:
                 paragraph_count_total += 1
                 segment_data = {
