@@ -154,6 +154,28 @@ function htmlToPlainText(html: string | null): string {
   return dom.window.document.body.textContent?.replace(/\$(\d+)/g, '\\$$$1') || '';
 }
 
+// Optimized HTML to plain text for search purposes (avoids heavy JSDOM instantiation)
+function fastHtmlToPlainText(html: string | null): string {
+  if (!html) return '';
+
+  // 1. Strip tags (replace with space to avoid word concatenation)
+  let text = html.replace(/<[^>]*>/g, ' ');
+
+  // 2. Decode common entities
+  text = text.replace(/&nbsp;/g, ' ')
+             .replace(/&amp;/g, '&')
+             .replace(/&lt;/g, '<')
+             .replace(/&gt;/g, '>')
+             .replace(/&quot;/g, '"')
+             .replace(/&#39;/g, "'");
+
+  // 3. Handle the specific requirement from htmlToPlainText
+  text = text.replace(/\$(\d+)/g, '\\$$$1');
+
+  // Collapse multiple spaces and trim
+  return text.replace(/\s+/g, ' ').trim();
+}
+
 // Helper function for safer HTML to Markdown conversion
 function convertHtmlToMarkdown(html: string): string {
   const dom = new JSDOM(html);
@@ -574,7 +596,7 @@ server.tool(
               
               const descriptionMatch = assignment.description ? 
                 searchTerms.some(term => 
-                  htmlToPlainText(assignment.description).toLowerCase().includes(term)
+                  fastHtmlToPlainText(assignment.description).toLowerCase().includes(term)
                 ) : false;
               
               return titleMatch || descriptionMatch;
