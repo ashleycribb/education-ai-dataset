@@ -89,9 +89,24 @@ def get_session_summaries(_all_statements: List[Dict[str, Any]]) -> List[Dict[st
     return sorted(sessions.values(), key=lambda s: s.get("start_timestamp", ""), reverse=True)
 
 @st.cache_data
+def _get_statements_by_session(_all_statements: List[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
+    """Indexes statements by session_id for efficient lookup."""
+    statements_by_session: Dict[str, List[Dict[str, Any]]] = {}
+    for i, stmt in enumerate(_all_statements):
+        session_id_path = stmt.get("context", {}).get("extensions", {})
+        session_id = session_id_path.get("http://example.com/xapi/extensions/session_id", f"unknown_session_stmt{i}") if isinstance(session_id_path, dict) else f"unknown_session_stmt{i}"
+
+        if session_id not in statements_by_session:
+            statements_by_session[session_id] = []
+        statements_by_session[session_id].append(stmt)
+    return statements_by_session
+
+@st.cache_data
 def get_turns_for_session(_all_statements: List[Dict[str, Any]], session_id: str) -> List[Dict[str, Any]]:
     """Filters and formats statements for a given session's dialogue display."""
-    session_statements = [s for s in _all_statements if s.get("context", {}).get("extensions", {}).get("http://example.com/xapi/extensions/session_id") == session_id]
+    statements_by_session = _get_statements_by_session(_all_statements)
+    session_statements = statements_by_session.get(session_id, [])
+
     dialogue_turns = []
     for stmt in session_statements:
         result_extensions = stmt.get("result", {}).get("extensions", {})
