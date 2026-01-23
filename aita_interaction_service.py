@@ -9,6 +9,7 @@ import uvicorn
 from datetime import datetime
 import os
 import json
+import time
 
 # --- Import new utility ---
 from model_loader_utils import load_model_tokenizer_with_adapter, DefaultLogger
@@ -31,6 +32,9 @@ except ImportError:
         def __init__(self, logger=None): self.logger = logger; print("INFO: Using DUMMY ModerationService.")
         def check_text(self, text:str) -> Dict[str, Any]:
             return {"is_safe": True, "flagged_categories": [], "scores": {}, "model_used": "dummy_moderation_disabled"}
+
+# --- Reasoner Import ---
+from pedagogical_reasoner import PedagogicalReasoner
 
 # --- 1. Pydantic Models ---
 class UserProfileCreate(BaseModel):
@@ -93,6 +97,7 @@ USER_PROFILES_DB: Dict[str, UserProfile] = {}
 
 # --- Services & Loggers ---
 moderation_service: ModerationService
+reasoner_service: PedagogicalReasoner
 service_logger = DefaultLogger() # Use DefaultLogger from utility, or integrate with Uvicorn's logger
 
 # --- 3. Model Loading Logic (Refactored) ---
@@ -126,7 +131,7 @@ def get_model_and_tokenizer_for_persona(persona_id: str, base_model_id: str) -> 
 
 @app.on_event("startup")
 async def startup_event():
-    global moderation_service # Ensure we're assigning to the global instance
+    global moderation_service, reasoner_service # Ensure we're assigning to the global instance
     service_logger.info("Service Startup: Initializing Moderation Service...")
     try:
         moderation_service = ModerationService(logger=service_logger)
@@ -138,6 +143,16 @@ async def startup_event():
             def check_text(self, text:str) -> Dict[str, Any]:
                 return {"is_safe": True, "flagged_categories": [], "scores": {}, "model_used": "dummy_moderation_startup_failed"}
         moderation_service = _DummyModService(logger=service_logger)
+
+    service_logger.info("Service Startup: Initializing Pedagogical Reasoner...")
+    try:
+        reasoner_service = PedagogicalReasoner(logger=service_logger)
+        service_logger.info("Pedagogical Reasoner initialized successfully.")
+    except Exception as e:
+        service_logger.error(f"Failed to initialize PedagogicalReasoner: {e}.", exc_info=True)
+        # Fallback if reasoner fails (unlikely given it's a simple class)
+        reasoner_service = PedagogicalReasoner(logger=service_logger)
+
 
     service_logger.info("Service Startup: Pre-loading default base model ('default_phi3_base')...")
     get_model_and_tokenizer_for_persona("default_phi3_base", BASE_MODEL_ID)
@@ -240,6 +255,9 @@ async def interact_with_aita(request: InteractionRequest):
         if not mod_output_results["is_safe"]:
             aita_final_response = "I may have generated a response that isn't quite right. Let's try a different approach."
 
+        # Analyze turn with Reasoner
+        reasoner_results = reasoner_service.analyze_turn(request.user_utterance, aita_final_response, context_data=lms_context)
+
         xapi_log_data = {
             "actor_name": "ServiceUser", "actor_account_name": request.user_id,
             "verb_id": "http://adlnet.gov/expapi/verbs/interacted", "verb_display": "interacted with AITA Service",
@@ -253,8 +271,9 @@ async def interact_with_aita(request: InteractionRequest):
             "context_extensions": {
                 "learning_objective_active": lo_id_log, "full_prompt_to_llm": prompt_text,
                 "user_utterance_raw": request.user_utterance, "aita_response_raw": aita_raw_response,
-                "pedagogical_notes": ["Service Placeholder: Note 1", "Service Placeholder: Note 2"], # Placeholder reasoner fields
-                "aita_turn_narrative_rationale": "Service Placeholder: Simulated rationale for this turn."
+                "pedagogical_notes": reasoner_results["pedagogical_notes"],
+                "ontology_concept_tags": reasoner_results["ontology_concept_tags"],
+                "aita_turn_narrative_rationale": reasoner_results["aita_turn_narrative_rationale"]
             }
         }
         log_xapi_statement(create_interaction_xapi_statement(**xapi_log_data), XAPI_LOG_FILE_PATH, service_logger)
