@@ -1,5 +1,4 @@
 import json
-import re
 from typing import List, Dict, Any, Optional
 
 # 1. Text Cleaning Function
@@ -12,10 +11,9 @@ def clean_text(text: str) -> str:
         return "" # Or raise an error, depending on desired handling
 
     # Normalize whitespace: replace multiple spaces/tabs/newlines with a single space
-    cleaned_text = re.sub(r'\s+', ' ', text)
-
-    # Strip leading/trailing whitespace from the whole text
-    cleaned_text = cleaned_text.strip()
+    # and strip leading/trailing whitespace.
+    # Using split() and join() is significantly faster than regex for this common case.
+    cleaned_text = ' '.join(text.split())
 
     # --- Conceptual Examples for More Advanced Cleaning (commented out) ---
     # Remove Project Gutenberg headers/footers (markers vary greatly)
