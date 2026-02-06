@@ -8,6 +8,7 @@ import torch
 import uvicorn
 from datetime import datetime
 import os
+import time
 import json
 
 # --- Import new utility ---
@@ -31,6 +32,77 @@ except ImportError:
         def __init__(self, logger=None): self.logger = logger; print("INFO: Using DUMMY ModerationService.")
         def check_text(self, text:str) -> Dict[str, Any]:
             return {"is_safe": True, "flagged_categories": [], "scores": {}, "model_used": "dummy_moderation_disabled"}
+
+# --- Pedagogical Reasoner ---
+class PedagogicalReasoner:
+    def __init__(self):
+        # Keyword-based heuristics for V1
+        self.strategies = {
+            "questioning": {
+                "keywords": ["?", "what", "how", "why", "can you", "do you", "tell me"],
+                "note": "Used questioning to stimulate critical thinking or check understanding."
+            },
+            "positive_reinforcement": {
+                "keywords": ["good job", "great", "excellent", "well done", "correct", "right", "nice work", "exactly"],
+                "note": "Provided positive reinforcement to encourage the student."
+            },
+            "encouragement": {
+                "keywords": ["keep trying", "almost", "close", "you can do it", "don't give up", "try again"],
+                "note": "Offered encouragement to maintain engagement."
+            },
+             "elaboration": {
+                "keywords": ["because", "means that", "for example", "instance", "specifically", "in other words"],
+                "note": "Elaborated on the concept to deepen understanding."
+            },
+            "correction": {
+                "keywords": ["actually", "not quite", "remember that", "instead", "consider"],
+                "note": "Provided corrective feedback or guidance."
+            }
+        }
+
+    def analyze_turn(self, aita_response: str, user_utterance: str, lo_description: str) -> Dict[str, Any]:
+        notes = []
+        response_lower = aita_response.lower()
+
+        # heuristic checks
+        # 1. Check for Questioning (Speech Act)
+        if "?" in aita_response:
+             if "Used questioning to stimulate critical thinking or check understanding." not in notes:
+                 notes.append("Used questioning to stimulate critical thinking or check understanding.")
+
+        # 2. Check keywords for other strategies
+        found_strategies = []
+        for key, data in self.strategies.items():
+            # Simple keyword matching
+            if any(k in response_lower for k in data["keywords"]):
+                 found_strategies.append(key)
+                 if data["note"] not in notes:
+                     notes.append(data["note"])
+
+        # Fallback note
+        if not notes:
+            notes.append("Provided information relevant to the query.")
+
+        # Rationale generation logic
+        # Construct a narrative sentence based on the dominant strategy found.
+        rationale = f"AITA responded to support the learning objective: '{lo_description}'."
+
+        if "positive_reinforcement" in found_strategies:
+            if "questioning" in found_strategies or "?" in aita_response:
+                rationale = f"Validated the student's input and asked a follow-up to deepen understanding of '{lo_description}'."
+            else:
+                rationale = f"Reinforced correct understanding of '{lo_description}' with positive feedback."
+        elif "correction" in found_strategies:
+             rationale = f"Provided corrective guidance to align understanding with '{lo_description}'."
+        elif "questioning" in found_strategies or "?" in aita_response:
+             rationale = f"Used inquiry to scaffold the student's thinking towards '{lo_description}'."
+        elif "elaboration" in found_strategies:
+             rationale = f"Explained the concept in more detail to clarify '{lo_description}'."
+
+        return {
+            "pedagogical_notes": notes,
+            "aita_turn_narrative_rationale": rationale
+        }
 
 # --- 1. Pydantic Models ---
 class UserProfileCreate(BaseModel):
@@ -93,6 +165,7 @@ USER_PROFILES_DB: Dict[str, UserProfile] = {}
 
 # --- Services & Loggers ---
 moderation_service: ModerationService
+pedagogical_reasoner = PedagogicalReasoner()
 service_logger = DefaultLogger() # Use DefaultLogger from utility, or integrate with Uvicorn's logger
 
 # --- 3. Model Loading Logic (Refactored) ---
@@ -240,6 +313,9 @@ async def interact_with_aita(request: InteractionRequest):
         if not mod_output_results["is_safe"]:
             aita_final_response = "I may have generated a response that isn't quite right. Let's try a different approach."
 
+        # Generate Pedagogical Reasoning for the Turn
+        reasoner_output = pedagogical_reasoner.analyze_turn(aita_final_response, request.user_utterance, lo_desc)
+
         xapi_log_data = {
             "actor_name": "ServiceUser", "actor_account_name": request.user_id,
             "verb_id": "http://adlnet.gov/expapi/verbs/interacted", "verb_display": "interacted with AITA Service",
@@ -253,8 +329,8 @@ async def interact_with_aita(request: InteractionRequest):
             "context_extensions": {
                 "learning_objective_active": lo_id_log, "full_prompt_to_llm": prompt_text,
                 "user_utterance_raw": request.user_utterance, "aita_response_raw": aita_raw_response,
-                "pedagogical_notes": ["Service Placeholder: Note 1", "Service Placeholder: Note 2"], # Placeholder reasoner fields
-                "aita_turn_narrative_rationale": "Service Placeholder: Simulated rationale for this turn."
+                "pedagogical_notes": reasoner_output["pedagogical_notes"],
+                "aita_turn_narrative_rationale": reasoner_output["aita_turn_narrative_rationale"]
             }
         }
         log_xapi_statement(create_interaction_xapi_statement(**xapi_log_data), XAPI_LOG_FILE_PATH, service_logger)
