@@ -9,6 +9,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional
+from collections import defaultdict
 import json
 import uuid
 import datetime
@@ -102,6 +103,8 @@ api_hub.add_middleware(
 students_db = {}
 sessions_db = {}
 interactions_db = []
+# Secondary index for O(1) session lookups
+interactions_by_session_id = defaultdict(list)
 webhooks_db = []
 
 # Student Management Endpoints
@@ -185,7 +188,9 @@ async def end_session(session_id: str, auth_data: dict = Depends(auth.verify_api
 @api_hub.post("/api/v1/interactions", response_model=APIResponse)
 async def log_interaction(interaction: InteractionEvent, auth_data: dict = Depends(auth.verify_api_key)):
     """Log a student interaction event"""
-    interactions_db.append(interaction.dict())
+    interaction_data = interaction.dict()
+    interactions_db.append(interaction_data)
+    interactions_by_session_id[interaction.session_id].append(interaction_data)
 
     # Update session interaction count
     if interaction.session_id in sessions_db:
@@ -200,7 +205,7 @@ async def log_interaction(interaction: InteractionEvent, auth_data: dict = Depen
 @api_hub.get("/api/v1/interactions/session/{session_id}", response_model=APIResponse)
 async def get_session_interactions(session_id: str, auth_data: dict = Depends(auth.verify_api_key)):
     """Get all interactions for a session"""
-    session_interactions = [i for i in interactions_db if i["session_id"] == session_id]
+    session_interactions = interactions_by_session_id.get(session_id, [])
 
     return APIResponse(
         success=True,
