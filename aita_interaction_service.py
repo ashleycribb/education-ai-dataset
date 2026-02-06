@@ -1,5 +1,6 @@
 import uuid
 from fastapi import FastAPI, HTTPException
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel
 from typing import List, Dict, Optional, Any
 import torch
@@ -7,6 +8,7 @@ import torch
 # from peft import PeftModel # No longer directly needed here
 import uvicorn
 from datetime import datetime
+import time
 import os
 import json
 
@@ -224,12 +226,15 @@ async def interact_with_aita(request: InteractionRequest):
         inputs = current_tokenizer(prompt_text, return_tensors="pt", add_special_tokens=True).to(current_device)
         input_ids_length = inputs.input_ids.shape[1]
 
+        def _generate():
+            with torch.no_grad():
+                return current_model.generate(
+                    inputs.input_ids, max_new_tokens=300, eos_token_id=current_tokenizer.eos_token_id,
+                    pad_token_id=current_tokenizer.pad_token_id, do_sample=True, temperature=0.7, top_p=0.9
+                )
+
         start_time = time.time()
-        with torch.no_grad():
-            generated_outputs = current_model.generate(
-                inputs.input_ids, max_new_tokens=300, eos_token_id=current_tokenizer.eos_token_id,
-                pad_token_id=current_tokenizer.pad_token_id, do_sample=True, temperature=0.7, top_p=0.9
-            )
+        generated_outputs = await run_in_threadpool(_generate)
         duration_s = time.time() - start_time
 
         response_ids = generated_outputs[0][input_ids_length:]
