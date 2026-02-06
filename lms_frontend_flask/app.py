@@ -1,4 +1,7 @@
-from flask import Flask, render_template, url_for, abort
+from flask import Flask, render_template, url_for, abort, request, jsonify
+import requests
+import uuid
+import json
 from .config import Config
 from .extensions import db
 from .models import Course, Module, Activity
@@ -14,7 +17,7 @@ app.config.from_object(Config)
 db.init_app(app)
 
 # Flask-Admin setup
-admin = Admin(app, name='LMS Content Admin', template_mode='bootstrap3')
+admin = Admin(app, name='LMS Content Admin')
 # Add administrative views here
 # Define custom ModelViews if needed for more control
 class SecureModelView(ModelView):
@@ -85,11 +88,67 @@ def show_activity(course_ext_id, module_ext_id, activity_ext_id):
 # Dummy API routes for url_for in templates (to be implemented later)
 @app.route('/api/activity/start', methods=['POST'])
 def start_ai_activity_api():
-    return {"status": "AI activity started (dummy response)", "session_id": "dummy_session_123"}
+    # In a real implementation, this might verify the user and activity,
+    # and maybe pre-create a session in a database.
+    # For now, we generate a session ID for the client to use.
+    session_id = str(uuid.uuid4())
+    return jsonify({"status": "AI activity started", "session_id": session_id})
 
 @app.route('/api/activity/interact', methods=['POST'])
 def interact_ai_activity_api():
-    return {"ai_messages": ["AI response (dummy)"], "xapi_statements": [], "is_activity_complete": False}
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No JSON data provided"}), 400
+
+    session_id = data.get("session_id")
+    user_utterance = data.get("user_utterance")
+    user_id = data.get("user_id", "default_user") # Default if not provided
+    # Also possible: ai_activity_key, history, etc.
+    aita_persona_id = data.get("ai_activity_key")
+
+    if not user_utterance:
+        return jsonify({"error": "user_utterance is required"}), 400
+
+    # Payload for AITA Service
+    payload = {
+        "session_id": session_id,
+        "user_id": user_id,
+        "user_utterance": user_utterance,
+        "aita_persona_id": aita_persona_id if aita_persona_id else "default_phi3_base",
+        # We can pass conversation history if the frontend maintains it,
+        # or rely on the service to maintain it if session_id is persistent.
+        # But looking at InteractionRequest, it has conversation_history: List[Dict[str, str]] = []
+        # The frontend should probably send the history or the service should be stateful.
+        # The service implementation shows it takes history.
+        "conversation_history": data.get("conversation_history", [])
+    }
+
+    aita_url = app.config['AITA_SERVICE_URL'] + "/interact"
+
+    try:
+        response = requests.post(aita_url, json=payload, timeout=30)
+        response.raise_for_status()
+        result = response.json()
+
+        # Transform result to match what frontend expects if needed.
+        # Frontend currently expects: {"ai_messages": ["AI response (dummy)"], "xapi_statements": [], "is_activity_complete": False}
+        # Service returns: {"session_id": str, "aita_response": str, "debug_info": ...}
+
+        return jsonify({
+            "ai_messages": [result.get("aita_response")],
+            "session_id": result.get("session_id"),
+            # Pass through debug info or other fields if useful
+            "debug_info": result.get("debug_info"),
+            "is_activity_complete": False # Logic for completion could be added later
+        })
+
+    except requests.exceptions.ConnectionError:
+        print(f"ERROR: Could not connect to AITA service at {aita_url}")
+        # Fallback or error
+        return jsonify({"error": "AI Service unavailable"}), 503
+    except requests.exceptions.RequestException as e:
+        print(f"ERROR: AITA service request failed: {e}")
+        return jsonify({"error": f"AI Service error: {str(e)}"}), 500
 
 def create_tables():
     with app.app_context():
