@@ -102,6 +102,7 @@ api_hub.add_middleware(
 students_db = {}
 sessions_db = {}
 interactions_db = []
+interactions_by_session = {} # Index for faster lookup by session_id
 webhooks_db = []
 
 # Student Management Endpoints
@@ -185,7 +186,13 @@ async def end_session(session_id: str, auth_data: dict = Depends(auth.verify_api
 @api_hub.post("/api/v1/interactions", response_model=APIResponse)
 async def log_interaction(interaction: InteractionEvent, auth_data: dict = Depends(auth.verify_api_key)):
     """Log a student interaction event"""
-    interactions_db.append(interaction.dict())
+    interaction_data = interaction.dict()
+    interactions_db.append(interaction_data)
+
+    # Update session index
+    if interaction.session_id not in interactions_by_session:
+        interactions_by_session[interaction.session_id] = []
+    interactions_by_session[interaction.session_id].append(interaction_data)
 
     # Update session interaction count
     if interaction.session_id in sessions_db:
@@ -200,7 +207,7 @@ async def log_interaction(interaction: InteractionEvent, auth_data: dict = Depen
 @api_hub.get("/api/v1/interactions/session/{session_id}", response_model=APIResponse)
 async def get_session_interactions(session_id: str, auth_data: dict = Depends(auth.verify_api_key)):
     """Get all interactions for a session"""
-    session_interactions = [i for i in interactions_db if i["session_id"] == session_id]
+    session_interactions = interactions_by_session.get(session_id, [])
 
     return APIResponse(
         success=True,
