@@ -1,7 +1,9 @@
-from flask import Flask, render_template, url_for, abort
+from flask import Flask, render_template, url_for, abort, request, redirect, flash
+from urllib.parse import urlparse
+from flask_login import login_user, logout_user, login_required, current_user
 from .config import Config
-from .extensions import db
-from .models import Course, Module, Activity
+from .extensions import db, login_manager
+from .models import Course, Module, Activity, User
 
 # Flask-Admin imports
 from flask_admin import Admin
@@ -12,17 +14,23 @@ app.config.from_object(Config)
 
 # Initialize extensions
 db.init_app(app)
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 # Flask-Admin setup
-admin = Admin(app, name='LMS Content Admin', template_mode='bootstrap3')
+admin = Admin(app, name='LMS Content Admin')
 # Add administrative views here
 # Define custom ModelViews if needed for more control
 class SecureModelView(ModelView):
-    # pass # Add authentication and authorization logic here later
-    # For now, it's open
     def is_accessible(self):
-        # Placeholder for admin access control
-        return True
+        return current_user.is_authenticated and current_user.is_admin
+
+    def inaccessible_callback(self, name, **kwargs):
+        return redirect(url_for('login', next=request.url))
 
 admin.add_view(SecureModelView(Course, db.session))
 admin.add_view(SecureModelView(Module, db.session))
@@ -66,6 +74,30 @@ def home():
     # navigation_items are injected by context_processor
     return render_template('index.html')
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
+
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        user = User.query.filter_by(username=username).first()
+        if user and user.check_password(password):
+            login_user(user)
+            next_page = request.args.get('next')
+            if not next_page or urlparse(next_page).netloc != '':
+                next_page = url_for('home')
+            return redirect(next_page)
+        else:
+            flash('Invalid username or password')
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    logout_user()
+    return redirect(url_for('home'))
+
 @app.route('/course/<string:course_ext_id>/module/<string:module_ext_id>')
 def show_module_activities(course_ext_id, module_ext_id):
     course = Course.query.filter_by(course_ext_id=course_ext_id).first_or_404()
@@ -102,6 +134,14 @@ def create_tables():
 
 def seed_data():
     with app.app_context():
+        # Seed Admin User
+        if User.query.filter_by(username='admin').first() is None:
+            admin_user = User(username='admin', is_admin=True)
+            admin_user.set_password('admin')
+            db.session.add(admin_user)
+            db.session.commit()
+            print("Admin user seeded.")
+
         if Course.query.first() is None: # Check if data already exists
             print("Seeding initial data...")
             # Create Roles (if you had a Role model and user roles for admin)
