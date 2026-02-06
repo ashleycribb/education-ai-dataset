@@ -2,6 +2,9 @@ import json
 import re
 from typing import List, Dict, Any, Optional
 
+# Pre-compile regex for performance
+WHITESPACE_REGEX = re.compile(r'\s+')
+
 # 1. Text Cleaning Function
 def clean_text(text: str) -> str:
     """
@@ -12,7 +15,7 @@ def clean_text(text: str) -> str:
         return "" # Or raise an error, depending on desired handling
 
     # Normalize whitespace: replace multiple spaces/tabs/newlines with a single space
-    cleaned_text = re.sub(r'\s+', ' ', text)
+    cleaned_text = WHITESPACE_REGEX.sub(' ', text)
 
     # Strip leading/trailing whitespace from the whole text
     cleaned_text = cleaned_text.strip()
