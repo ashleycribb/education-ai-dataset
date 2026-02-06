@@ -17,6 +17,7 @@ class Config:
                               'postgresql://lms_user:lms_password@localhost:5432/lms_db_test_default'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     FLASK_ADMIN_SWATCH = 'cerulean' # Optional: For theming Flask-Admin
+    AITA_SERVICE_URL = os.environ.get('AITA_SERVICE_URL') or 'http://localhost:8000'
 
     # For debugging:
     # print(f"DEBUG: FLASK_SECRET_KEY: {SECRET_KEY}")
