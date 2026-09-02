@@ -79,6 +79,24 @@ To capture the rich data from the teacher's feedback, the following `Context Ext
 | `https://w3id.org/xapi/ai/extensions/teacher-rating`                 | teacher-rating          | A numerical rating provided by the teacher for the AI's assistance (e.g., on a scale of 1-5).           | `number`         |
 | `https://w3id.org/xapi/ai/extensions/teacher-correction`             | teacher-correction      | The full content of the corrective feedback or alternative suggestion provided by the teacher.        | `string`         |
 
+### 3.7. Further Vocabulary for Richer Interactions
+
+To capture more nuanced interactions between all participants in the learning process, the following `Verbs` can be used.
+
+#### For Student Learners
+
+| Verb ID                                                      | Display Name                  | Description                                                                                             |
+| ------------------------------------------------------------ | ----------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `https://w3id.org/xapi/ai/verbs/asked-for-help`                | asked for help                | Indicates that the learner explicitly requested help from the AI assistant.                             |
+| `https://w3id.org/xapi/ai/verbs/disagreed-with-assistance`     | disagreed with assistance     | Indicates that the learner expressed disagreement with the AI's suggestion or feedback.               |
+
+#### For Teachers and Facilitators
+
+| Verb ID                                                      | Display Name                  | Description                                                                                             |
+| ------------------------------------------------------------ | ----------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `https://w3id.org/xapi/ai/verbs/overrode-ai-suggestion`        | overrode AI suggestion        | Indicates that a teacher or facilitator intervened to override a suggestion made by the AI.           |
+| `https://w3id.org/xapi/ai/verbs/approved-ai-action`            | approved AI action            | Indicates that a teacher or facilitator gave explicit approval for an action taken by the AI.         |
+
 ## 4. Security and Privacy
 
 This profile inherits the robust security and privacy model of the xAPI and LRS specifications. All data should be:

@@ -52,6 +52,12 @@ To fully leverage the analytical power of this xAPI Profile, we have designed a 
 
 This document serves as a guide for developers and organizations looking to build a next-generation LRS that is truly "AI-ready."
 
+## Proof-of-Concept Tool
+
+To help make the conceptual database model easier to understand, we have created a simple, runnable tool that simulates the data ingestion process. This tool is designed for a non-technical audience and provides a clear, step-by-step demonstration of how data flows into our proposed AI-Enhanced LRS.
+
+**[Click here to learn about and run the Proof-of-Concept Tool](./poc-tool/README.md)**
+
 ## Guiding Principles
 
 *   **xAPI Alignment:** We will adhere to the principles and data structures of the xAPI specification to ensure maximum interoperability.
