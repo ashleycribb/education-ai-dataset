@@ -16,6 +16,7 @@ from typing import Dict, List, Any, Optional
 import uuid
 from dataclasses import dataclass
 from enum import Enum
+import random
 
 # Configure Streamlit page
 st.set_page_config(
@@ -77,11 +78,11 @@ class AnalyticsEngine:
                 misconception_rate=np.random.uniform(0.1, 0.8),
                 help_request_frequency=np.random.uniform(0.1, 0.5),
                 preferred_learning_pattern=np.random.choice(list(LearningPattern)),
-                knowledge_gaps=np.random.choice([
+                knowledge_gaps=random.choice([
                     ["algebra", "fractions"], ["geometry", "word problems"],
                     ["reading comprehension"], ["scientific method"], ["essay writing"]
                 ]),
-                strengths=np.random.choice([
+                strengths=random.choice([
                     ["problem solving", "creativity"], ["logical thinking", "analysis"],
                     ["communication", "collaboration"], ["research", "critical thinking"]
                 ]),
