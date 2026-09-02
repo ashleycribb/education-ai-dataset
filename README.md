@@ -58,6 +58,12 @@ To help make the conceptual database model easier to understand, we have created
 
 **[Click here to learn about and run the Proof-of-Concept Tool](./poc-tool/README.md)**
 
+### Communication Model
+
+For advanced implementations, we also propose a conceptual communication model that includes a high-performance, model-centric interface for trusted communication between AI agents and the LRS, in addition to the standard xAPI REST interface.
+
+**[Click here to view the Conceptual Communication Model](./COMMUNICATION_MODEL.md)**
+
 ## Guiding Principles
 
 *   **xAPI Alignment:** We will adhere to the principles and data structures of the xAPI specification to ensure maximum interoperability.
