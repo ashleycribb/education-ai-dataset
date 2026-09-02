@@ -3,9 +3,11 @@ import streamlit as st
 from typing import List, Dict, Any, Optional
 import requests # Added for API calls
 import uuid # Added for potential client-side session init if needed
+import json
 
 # --- Configuration ---
 AITA_SERVICE_URL = "http://localhost:8000" # URL of the FastAPI backend service
+MAX_HISTORY_TURNS = 10
 
 # --- Session State Initialization ---
 if "messages" not in st.session_state:
@@ -110,15 +112,44 @@ def run_student_frontend_v2():
         with st.chat_message("assistant"):
             with st.spinner("AITA is thinking..."):
                 try:
-                    response = requests.post(f"{AITA_SERVICE_URL}/interact", json=payload, timeout=60) # Increased timeout
+                    if not st.session_state.session_id:
+                        start_payload = {
+                            "user_id": st.session_state.user_id,
+                            "aita_persona_id": st.session_state.current_aita_persona_id,
+                        }
+                        start_response = requests.post(
+                            f"{AITA_SERVICE_URL}/start_ai_activity",
+                            json=start_payload,
+                            timeout=30,
+                        )
+                        start_response.raise_for_status()
+                        start_data = start_response.json()
+                        st.session_state.session_id = start_data.get("session_id")
+                        if not st.session_state.session_id:
+                            raise ValueError(
+                                "Failed to start session: No session_id received."
+                            )
+
+                    response = requests.post(
+                        f"{AITA_SERVICE_URL}/interact_ai_activity",
+                        json=payload,
+                        timeout=60,
+                    )  # Increased timeout
                     response.raise_for_status()
                     response_data = response.json()
 
-                    assistant_response = response_data.get("aita_response", "Sorry, I encountered an issue processing your request.")
-                    st.session_state.session_id = response_data.get("session_id") # Update/set session_id from backend
+                    assistant_response = response_data.get(
+                        "aita_response",
+                        "Sorry, I encountered an issue processing your request.",
+                    )
+                    st.session_state.session_id = response_data.get(
+                        "session_id"
+                    )  # Update/set session_id from backend
 
                 except requests.exceptions.Timeout:
-                    assistant_response = "Error: The AITA service timed out. Please try again."
+                    assistant_response = (
+                        "Error: The AITA service timed out. Please try again."
+                    )
                     st.error(assistant_response)
                 except requests.exceptions.ConnectionError:
                     assistant_response = "Error: Could not connect to AITA service. Please ensure it's running."
