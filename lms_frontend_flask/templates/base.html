@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}LMS Platform{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <nav class="column left-column" id="left-column">
+            <h2>Navigation</h2>
+            {% block navigation %}
+            <p>Course navigation will go here.</p>
+            {% endblock %}
+        </nav>
+        <main class="column middle-column" id="middle-column">
+            {% block content %}
+            <h1>Welcome</h1>
+            <p>Main content will appear here.</p>
+            {% endblock %}
+        </main>
+        <aside class="column right-column" id="right-column">
+            <h2>AI Assistant</h2>
+            {% block ai_chat %}
+            <p>AI chat interface will go here.</p>
+            {% endblock %}
+        </aside>
+    </div>
+    <!-- Placeholder for main.js, ensure the js directory exists or the path is correct -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
