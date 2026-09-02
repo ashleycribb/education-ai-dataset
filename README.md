@@ -38,6 +38,12 @@ To demonstrate the power of this profile, we have defined a specific vocabulary 
 
 By using the specialized `Verbs` (e.g., `provided-hint`, `gave-feedback`) and `Context Extensions` defined in this profile, researchers and educators can perform both quantitative and qualitative analysis on the effectiveness of AI assistants. For example, one could analyze not just *how often* an AI provides hints, but also the *exact content* of those hints and the learner prompts that triggered them.
 
+### Teacher in the Loop: Improving AI with Human Expertise
+
+A crucial aspect of responsible AI in education is ensuring that human educators can guide and improve AI agents. This profile includes a "Teacher in the Loop" vocabulary to facilitate this feedback cycle. When an AI's interaction with a student is recorded, a teacher can then review that specific interaction and record their own feedback as a new xAPI statement.
+
+This allows the AI agent to learn from expert feedback, creating a powerful mechanism for continuous improvement and ensuring that the AI's behavior aligns with sound pedagogical practices.
+
 ## Guiding Principles
 
 *   **xAPI Alignment:** We will adhere to the principles and data structures of the xAPI specification to ensure maximum interoperability.

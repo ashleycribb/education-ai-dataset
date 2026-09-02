@@ -59,6 +59,26 @@ To capture the qualitative data essential for analysis, the following `Context E
 | `https://w3id.org/xapi/ai/extensions/prompt`                   | prompt                 | The specific question, statement, or action from the learner that triggered the AI's assistance.        | `string`  |
 | `https://w3id.org/xapi/ai/extensions/assistance-content`       | assistance-content     | The full content of the hint, feedback, or explanation provided by the AI assistant.                  | `string`  |
 
+### 3.5. Use Case: Teacher in the Loop
+
+To facilitate a feedback cycle where human educators can guide and improve AI agents, this profile defines the following `Verbs`. These are designed for statements where the `Actor` is a human teacher and the `Object` is the xAPI statement representing the AI-student interaction being reviewed.
+
+| Verb ID                                                | Display Name           | Description                                                                                             |
+| ------------------------------------------------------ | ---------------------- | ------------------------------------------------------------------------------------------------------- |
+| `https://w3id.org/xapi/ai/verbs/reviewed-interaction`    | reviewed interaction   | Indicates that a teacher has reviewed an AI-student interaction.                                        |
+| `https://w3id.org/xapi/ai/verbs/rated-assistance`        | rated assistance       | Indicates that a teacher has provided a quantitative rating for the AI's assistance.                    |
+| `https://w3id.org/xapi/ai/verbs/corrected-assistance`    | corrected assistance   | Indicates that a teacher has provided a qualitative correction or an alternative suggestion for the AI. |
+
+### 3.6. Context Extensions for Teacher in the Loop
+
+To capture the rich data from the teacher's feedback, the following `Context Extensions` should be used.
+
+| Extension ID                                                       | Display Name            | Description                                                                                             | Data Type        |
+| ------------------------------------------------------------------ | ----------------------- | ------------------------------------------------------------------------------------------------------- | ---------------- |
+| `https://w3id.org/xapi/ai/extensions/interaction-reference`        | interaction-reference   | The UUID of the xAPI statement representing the AI-student interaction that is being reviewed.          | `UUID`           |
+| `https://w3id.org/xapi/ai/extensions/teacher-rating`                 | teacher-rating          | A numerical rating provided by the teacher for the AI's assistance (e.g., on a scale of 1-5).           | `number`         |
+| `https://w3id.org/xapi/ai/extensions/teacher-correction`             | teacher-correction      | The full content of the corrective feedback or alternative suggestion provided by the teacher.        | `string`         |
+
 ## 4. Security and Privacy
 
 This profile inherits the robust security and privacy model of the xAPI and LRS specifications. All data should be:
