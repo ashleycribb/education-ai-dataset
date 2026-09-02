@@ -521,10 +521,8 @@ server.tool(
         };
       }
 
-      // Search assignments in each course
-      let allResults: AssignmentWithCourse[] = [];
-      
-      for (const course of courses) {
+      // Search assignments in each course in parallel
+      const resultsPromises = courses.map(async (course) => {
         try {
           // Build the assignments query
           let assignmentsUrl = `/courses/${course.id}/assignments?per_page=100&order_by=due_at&include[]=submission`;
@@ -590,19 +588,21 @@ server.tool(
             return isDateInRange(assignment.due_at, dueBefore, dueAfter);
           });
           
-          // Add course information to each matching assignment
-          dateFilteredAssignments.forEach((assignment) => {
-            allResults.push({
-              ...assignment,
-              courseName: course.name,
-              courseId: course.id
-            });
-          });
+          // Return assignments with course info
+          return dateFilteredAssignments.map((assignment) => ({
+            ...assignment,
+            courseName: course.name,
+            courseId: course.id
+          }));
         } catch (error) {
           console.error(`Error searching in course ${course.id}: ${(error as Error).message}`);
-          // Continue with other courses even if one fails
+          // Return empty array on error to allow other courses to succeed
+          return [];
         }
-      }
+      });
+
+      const resultsArrays = await Promise.all(resultsPromises);
+      const allResults: AssignmentWithCourse[] = resultsArrays.flat();
       
       // Sort results by due date
       allResults.sort((a, b) => {
