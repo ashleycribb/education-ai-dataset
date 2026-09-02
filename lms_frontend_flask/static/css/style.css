@@ -1,0 +1,60 @@
+/* lms_frontend_flask/static/css/style.css */
+body {
+    font-family: sans-serif;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.container {
+    display: flex;
+    flex-grow: 1;
+    width: 100%;
+}
+
+.column {
+    padding: 20px;
+    border: 1px solid #ccc; /* For visibility during layout */
+    box-sizing: border-box; /* Include padding and border in the element's total width and height */
+}
+
+.left-column {
+    flex: 0 0 20%; /* Fixed width: 20% of the container */
+    background-color: #f0f0f0;
+    overflow-y: auto;
+}
+
+.middle-column {
+    flex: 0 0 55%; /* Fixed width: 55% of the container */
+    background-color: #ffffff;
+    overflow-y: auto; /* If content overflows */
+}
+
+.right-column {
+    flex: 0 0 25%; /* Fixed width: 25% of the container */
+    background-color: #f9f9f9;
+    display: flex; /* Using flex for internal alignment of chat */
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+/* Basic styling for headings, can be expanded */
+h1, h2 {
+    color: #333;
+}
+
+/* Placeholder for navigation links */
+.left-column ul {
+    list-style-type: none;
+    padding: 0;
+}
+.left-column ul li a {
+    text-decoration: none;
+    color: #007bff;
+    display: block;
+    padding: 8px 0;
+}
+.left-column ul li a:hover {
+    text-decoration: underline;
+}
