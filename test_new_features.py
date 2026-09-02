@@ -88,7 +88,7 @@ def test_feature_functionality():
     try:
         # Test API Integration Hub
         print("🔄 Testing API Integration Hub functionality...")
-        from api_integration_hub import StudentProfile, SessionData, QuizGenerationRequest
+        from api_integration_hub import StudentProfile, SessionData
 
         # Test model creation
         student = StudentProfile(student_id="test_001", name="Test Student")
