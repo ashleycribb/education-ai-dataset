@@ -1,0 +1,7 @@
+{
+  "educatorId": "ed-001",
+  "attributes": {
+    "name": "Dr. Evelyn Reed",
+    "roles": ["instructor", "advisor"]
+  }
+}
