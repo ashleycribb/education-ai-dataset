@@ -58,6 +58,50 @@ To help make the conceptual database model easier to understand, we have created
 
 **[Click here to learn about and run the Proof-of-Concept Tool](./poc-tool/README.md)**
 
+### Cloud-Ready MCP Proof-of-Concept
+
+To demonstrate a practical, scalable implementation, we have created a cloud-ready proof-of-concept for the Machine-to-Machine Communication Protocol (MCP). This PoC is a containerized web service that can be deployed on any modern cloud platform (e.g., AWS, Google Cloud, Azure).
+
+It uses the FastAPI framework to provide a simple HTTP endpoint for receiving xAPI statements, making it easy to integrate with other services.
+
+#### Running the MCP PoC with Docker
+
+To make it easy to run and test, the MCP service is packaged as a Docker container.
+
+**Prerequisites:**
+*   Docker installed on your system.
+
+**Instructions:**
+
+1.  **Build the Docker image:**
+    ```bash
+    docker build -t mcp-service ./mcp-poc
+    ```
+
+2.  **Run the container:**
+    ```bash
+    docker run -d -p 8000:8000 --name mcp-container mcp-service
+    ```
+    This will start the service in the background and map your local port 8000 to the container's port 8000.
+
+3.  **Test the service:**
+    You can now run the client script to send a test statement to the running service:
+    ```bash
+    python3 mcp-poc/client.py
+    ```
+
+4.  **View the logs:**
+    To see the logs from the running container, use the following command:
+    ```bash
+    docker logs mcp-container
+    ```
+
+5.  **Stop the container:**
+    When you are finished, you can stop and remove the container:
+    ```bash
+    docker stop mcp-container
+    docker rm mcp-container
+    ```
 We have also created a functional, runnable demonstration of the high-performance MCP interface.
 
 **[Click here to learn about and run the MCP Proof-of-Concept](./mcp-poc/README.md)**
