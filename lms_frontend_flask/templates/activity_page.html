@@ -1,0 +1,66 @@
+<!-- lms_frontend_flask/templates/activity_page.html -->
+{% extends "base.html" %}
+
+{% block title %}{{ activity.title }} - {{ module.title }}{% endblock %}
+
+{% block navigation %}
+    <p><a href="{{ url_for('home') }}">&laquo; All Courses</a></p>
+    <hr>
+    {# Use ext_ids for URL generation #}
+    <p><a href="{{ url_for('show_module_activities', course_ext_id=course.course_ext_id, module_ext_id=module.module_ext_id) }}">&laquo; Back to Module: {{ module.title }}</a></p>
+    <hr>
+    <h4>Course: {{ course.title }}</h4>
+    <h5>Module: {{ module.title }}</h5>
+    <h6>Current Activity: {{ activity.title }}</h6>
+    <hr>
+    <p><strong>Other activities in this module:</strong></p>
+    <ul>
+        {# Use the get_activities_for_module_helper passed by context_processor #}
+        {# It expects the internal module.id #}
+        {% set current_module_activities = get_activities_for_module(module.id) %}
+        {% for act in current_module_activities %}
+        <li>
+            {# Use ext_ids for URL generation #}
+            <a href="{{ url_for('show_activity', course_ext_id=course.course_ext_id, module_ext_id=module.module_ext_id, activity_ext_id=act.activity_ext_id) }}" {% if act.activity_ext_id == activity.activity_ext_id %}style="font-weight: bold;"{% endif %}>
+                {{ act.title }}
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+{% endblock %}
+
+{% block content %}
+    <h2>{{ activity.title }}</h2>
+    <p><em>{{ activity.description }}</em></p>
+    <hr>
+    <div class="activity-content">
+        {% if activity.content_type == 'reading_passage' %}
+            <h3>Reading Material:</h3>
+            <article style="white-space: pre-wrap; border: 1px solid #eee; padding:10px; background-color: #fdfdfd;">{{ activity.content }}</article>
+            <hr>
+            <p><em>When you are ready, you can start interacting with the AI assistant about this reading in the panel on the right.</em></p>
+        {% elif activity.content_type == 'ai_interaction' %}
+            <p>{{ activity.content }}</p>
+            <p><em>The AI Assistant panel on the right will guide you through this activity. Please type your first response or greeting to begin.</em></p>
+        {% else %}
+            <p>Activity content placeholder for type: {{ activity.content_type }}. Content: {{ activity.content }}</p>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block ai_chat %}
+    <div id="chat-history" style="height: 300px; border: 1px solid #eee; overflow-y: scroll; padding: 10px; margin-bottom:10px; background-color: #fff;">
+        <p><em>AI Assistant is ready for '{{ activity.title }}'.</em></p>
+        <!-- Messages will be added here by JavaScript -->
+    </div>
+    <div id="chat-input-area">
+        <input type="text" id="student-input" style="width: calc(100% - 70px); padding: 8px; margin-right: 5px;" placeholder="Your response...">
+        <button id="send-button" style="padding: 8px;">Send</button>
+    </div>
+    <!-- Hidden fields to store current context for JavaScript -->
+    <input type="hidden" id="current-user-id" value="student123"> {# Placeholder user_id for now #}
+    <input type="hidden" id="current-activity-key" value="{{ activity.ai_activity_key }}">
+    {# These url_for calls require the dummy API routes to be defined in app.py #}
+    <input type="hidden" id="start-activity-url" value="{{ url_for('start_ai_activity_api') }}">
+    <input type="hidden" id="interact-activity-url" value="{{ url_for('interact_ai_activity_api') }}">
+{% endblock %}
