@@ -58,6 +58,10 @@ To help make the conceptual database model easier to understand, we have created
 
 **[Click here to learn about and run the Proof-of-Concept Tool](./poc-tool/README.md)**
 
+We have also created a functional, runnable demonstration of the high-performance MCP interface.
+
+**[Click here to learn about and run the MCP Proof-of-Concept](./mcp-poc/README.md)**
+
 ### Communication Model
 
 For advanced implementations, we also propose a conceptual communication model that includes a high-performance, model-centric interface for trusted communication between AI agents and the LRS, in addition to the standard xAPI REST interface.
