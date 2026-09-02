@@ -1,0 +1,57 @@
+[
+  {
+    "actor": { "mbox": "mailto:sally.student@example.com", "name": "Sally Student" },
+    "verb": { "id": "http://adlnet.gov/expapi/verbs/completed", "display": { "en-US": "completed" } },
+    "object": { "id": "http://example.com/courses/cs-101", "definition": { "name": { "en-US": "Introduction to Computer Science" } } }
+  },
+  {
+    "actor": { "mbox": "mailto:john.doe@example.com", "name": "John Doe" },
+    "verb": { "id": "http://adlnet.gov/expapi/verbs/started", "display": { "en-US": "started" } },
+    "object": { "id": "http://example.com/courses/cs-101", "definition": { "name": { "en-US": "Introduction to Computer Science" } } }
+  },
+  {
+    "actor": { "name": "AI Teacher's Assistant", "account": { "homePage": "http://example.com/ai-assistant", "name": "ai-assistant-001" } },
+    "verb": { "id": "https://w3id.org/xapi/ai/verbs/gave-feedback", "display": { "en-US": "gave feedback" } },
+    "object": { "id": "http://example.com/activities/quiz-1/question-2" },
+    "context": { "extensions": { "https://w3id.org/xapi/ai/extensions/prompt": "I'm not sure how to start.", "https://w3id.org/xapi/ai/extensions/assistance-content": "Think about the main components of a recursive function." } }
+  },
+  {
+    "actor": { "mbox": "mailto:sally.student@example.com", "name": "Sally Student" },
+    "verb": { "id": "https://w3id.org/xapi/ai/verbs/assisted", "display": { "en-US": "assisted" } },
+    "object": { "id": "http://example.com/activities/quiz-1/question-2" }
+  },
+    {
+    "actor": { "name": "AI Teacher's Assistant", "account": { "homePage": "http://example.com/ai-assistant", "name": "ai-assistant-001" } },
+    "verb": { "id": "https://w3id.org/xapi/ai/verbs/provided-hint", "display": { "en-US": "provided hint" } },
+    "object": { "id": "http://example.com/activities/coding-exercise-1" },
+    "context": { "extensions": { "https://w3id.org/xapi/ai/extensions/prompt": "User has been idle for 2 minutes.", "https://w3id.org/xapi/ai/extensions/assistance-content": "Don't forget to handle the base case for your recursion." } }
+  },
+  {
+    "actor": { "mbox": "mailto:john.doe@example.com", "name": "John Doe" },
+    "verb": { "id": "https://w3id.org/xapi/ai/verbs/assisted", "display": { "en-US": "assisted" } },
+    "object": { "id": "http://example.com/activities/coding-exercise-1" }
+  },
+  {
+    "actor": { "name": "AI Teacher's Assistant", "account": { "homePage": "http://example.com/ai-assistant", "name": "ai-assistant-001" } },
+    "verb": { "id": "https://w3id.org/xapi/ai/verbs/clarified-concept", "display": { "en-US": "clarified concept" } },
+    "object": { "id": "http://example.com/concepts/big-o-notation" },
+    "context": { "extensions": { "https://w3id.org/xapi/ai/extensions/prompt": "What is Big O notation?", "https://w3id.org/xapi/ai/extensions/assistance-content": "Big O notation is a way to describe the upper bound of an algorithm's runtime." } }
+  },
+  {
+    "actor": { "name": "AI Teacher's Assistant", "account": { "homePage": "http://example.com/ai-assistant", "name": "ai-assistant-001" } },
+    "verb": { "id": "https://w3id.org/xapi/ai/verbs/gave-feedback", "display": { "en-US": "gave feedback" } },
+    "object": { "id": "http://example.com/activities/quiz-1/question-3" },
+    "context": { "extensions": { "https://w3id.org/xapi/ai/extensions/prompt": "My answer is O(n^2).", "https://w3id.org/xapi/ai/extensions/assistance-content": "You're close! Check your inner loop again." } }
+  },
+  {
+    "actor": { "mbox": "mailto:sally.student@example.com", "name": "Sally Student" },
+    "verb": { "id": "http://adlnet.gov/expapi/verbs/answered", "display": { "en-US": "answered" } },
+    "object": { "id": "http://example.com/activities/quiz-1/question-3" }
+  },
+    {
+    "actor": { "name": "AI Teacher's Assistant", "account": { "homePage": "http://example.com/ai-assistant", "name": "ai-assistant-001" } },
+    "verb": { "id": "https://w3id.org/xapi/ai/verbs/provided-hint", "display": { "en-US": "provided hint" } },
+    "object": { "id": "http://example.com/activities/coding-exercise-2" },
+    "context": { "extensions": { "https://w3id.org/xapi/ai/extensions/prompt": "User is struggling with the loop condition.", "https://w3id.org/xapi/ai/extensions/assistance-content": "Think about the difference between `<` and `<=`." } }
+  }
+]
