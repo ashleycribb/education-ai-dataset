@@ -10,6 +10,7 @@ from datetime import datetime
 import os
 import json
 import time
+import asyncio
 
 # --- Import new utility ---
 from model_loader_utils import load_model_tokenizer_with_adapter, DefaultLogger
@@ -264,11 +265,15 @@ async def interact_ai_activity(request: InteractionRequest):
         input_ids_length = inputs.input_ids.shape[1]
 
         start_time = time.time()
-        with torch.no_grad():
-            generated_outputs = current_model.generate(
-                inputs.input_ids, max_new_tokens=300, eos_token_id=current_tokenizer.eos_token_id,
-                pad_token_id=current_tokenizer.pad_token_id, do_sample=True, temperature=0.7, top_p=0.9
-            )
+
+        def _generate():
+            with torch.no_grad():
+                return current_model.generate(
+                    inputs.input_ids, max_new_tokens=300, eos_token_id=current_tokenizer.eos_token_id,
+                    pad_token_id=current_tokenizer.pad_token_id, do_sample=True, temperature=0.7, top_p=0.9
+                )
+
+        generated_outputs = await asyncio.to_thread(_generate)
         duration_s = time.time() - start_time
 
         response_ids = generated_outputs[0][input_ids_length:]
